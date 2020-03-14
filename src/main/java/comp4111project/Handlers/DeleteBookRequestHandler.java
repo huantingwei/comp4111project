@@ -1,4 +1,4 @@
-package comp4111project;
+package comp4111project.Handlers;
 
 import java.io.IOException;
 
@@ -11,14 +11,15 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 
-public class AddBookRequestHandler implements HttpRequestHandler {
+public class DeleteBookRequestHandler implements HttpRequestHandler {
+	
 	
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-
+		
         response.setStatusCode(HttpStatus.SC_OK);
         response.setEntity(
-                new StringEntity("This is an add book request",
+                new StringEntity("This is a delete book request",
                         ContentType.TEXT_PLAIN));
 	}
 }

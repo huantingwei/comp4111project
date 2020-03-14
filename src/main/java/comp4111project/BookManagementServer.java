@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 
+import comp4111project.Handlers.*;
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.config.SocketConfig;
@@ -78,11 +79,18 @@ public class BookManagementServer {
 		LoginRequestHandler loginRequestHandler = new LoginRequestHandler();
 		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
 		DeleteBookRequestHandler deleteBookRequestHandler = new DeleteBookRequestHandler();
+
+        LookupBookRequestHandler lookupBookRequestHandler = new LookupBookRequestHandler();
+        LoanBookRequestHandler loanBookRequestHandler = new LoanBookRequestHandler();
+        ReturnBookRequestHandler returnBookRequestHandler = new ReturnBookRequestHandler();
+
+        TestHandler testHandler = new TestHandler();
 		
 		handlerMapper.register(rootDirectory + "/login", loginRequestHandler);
 		handlerMapper.register(rootDirectory + "/logout", logoutRequestHandler);
 		handlerMapper.register(rootDirectory + "/books", deleteBookRequestHandler);
 		// other requestHandlers
+        handlerMapper.register( rootDirectory + "/test", testHandler);
 		
 		/**
 		 * Set up the server
@@ -101,9 +109,14 @@ public class BookManagementServer {
                 .setHandlerMapper(handlerMapper)
                 .create();
 
-        server.start();
-        server.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-        
+        try {
+            server.start();
+            System.out.println("Server has started with port " + server.getLocalPort());
+            server.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+        } catch (Exception err) {
+            System.out.println("Error: "  + err);
+        }
+
         // not sure what are these yet! 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override

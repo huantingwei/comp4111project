@@ -1,11 +1,17 @@
 package comp4111project;
 
+import comp4111project.Model.Book;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class DBConnection {
@@ -15,7 +21,7 @@ public class DBConnection {
     final private int port = 3306;
     final private String instance = "comp4111project";
     final private String username = "root";
-    final private String password = "toor";
+    final private String password = "root";
      
     public DBConnection() {
         try {
@@ -25,7 +31,7 @@ public class DBConnection {
         	catch(ClassNotFoundException e) {
         	    System.out.println(e);
         	}
-        	String url = "jdbc:mysql://localhost:" + port + "/"+ instance;
+        	String url = "jdbc:mysql://localhost:" + port + "/" + instance;
             con = DriverManager.getConnection(url, username, password);
             st = con.createStatement();
              
@@ -69,6 +75,55 @@ public class DBConnection {
     	      System.err.println("Got an exception!");
     	      System.err.println(e.getMessage());
     	}
-    	
+    }
+
+    public Vector getBooks(ConcurrentHashMap<String, String> queryPairs) {
+        Vector<Book> books = new Vector<Book>();
+//        int limit;
+//
+//        if(queryPairs.containsKey("limit")) {
+//            limit = Integer.parseInt(queryPairs.get("limit"));
+//            System.out.println(limit);
+//        }
+        try {
+            String query = "SELECT * FROM book WHERE";
+            for (Map.Entry<String, String> entry : queryPairs.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                System.out.println(key);
+
+                if(key.equals("author")) {
+                    System.out.println("yo");
+                    query += " " + key + " LIKE" + " '%" + value + "%'" + " AND";
+                } else if(!key.equals("limit") || !key.equals("sortby") || !key.equals("order")) {
+                    query += " " + key + " =" + " '" + value +"'" + " AND";
+                }
+            }
+            query = query.substring(0, query.length() - 3);
+            System.out.println(query);
+
+//            PreparedStatement preparedStmt = con.prepareStatement(query);
+//            preparedStmt.setString(1, "%" + queryPairs.get("author") + "%");
+////            preparedStmt.setString(2, id);
+//            rs = preparedStmt.executeQuery();
+            rs = st.executeQuery(query);
+
+            System.out.println("Book LookUp");
+            while(rs.next()) {
+                String bookID = rs.getString("idbook");
+                String title = rs.getString("title");
+                String bookAuthor = rs.getString("author");
+                String publisher = rs.getString("publisher");
+                int year = rs.getInt("year");
+                System.out.println("title= " + title+ " author= "+ bookAuthor + " publisher= "+ publisher + " year= " + year);
+                Book foundBook = new Book(Integer.parseInt(bookID), title, bookAuthor, publisher, year);
+                books.add(foundBook);
+            }
+        } catch (Exception e) {
+            System.err.println("Got an exception!");
+            System.err.println(e.getMessage());
+        }
+
+        return books;
     }
 }
