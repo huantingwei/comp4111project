@@ -39,6 +39,7 @@ public class BookManagementServer {
 		/**
 		 * Database connection: use a "connection pool"
 		 */
+		DBConnection dbConnection = new DBConnection();
 		
 		
 		/**
@@ -61,8 +62,12 @@ public class BookManagementServer {
          * Map the RequestHandlers to each urls
          */
 		UriHttpRequestHandlerMapper handlerMapper = new UriHttpRequestHandlerMapper();
+
 		LoginRequestHandler loginRequestHandler = new LoginRequestHandler();
 		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
+		TestHandler testHandler = new TestHandler(dbConnection);
+
+		handlerMapper.register( rootDirectory + "/test", testHandler);
 		handlerMapper.register(rootDirectory + "/login", loginRequestHandler);
 		handlerMapper.register(rootDirectory + "/logout", logoutRequestHandler);
 		// other requestHandlers
@@ -84,7 +89,13 @@ public class BookManagementServer {
                 .setHandlerMapper(handlerMapper)
                 .create();
 
-        server.start();
+        try {
+            server.start();
+            System.out.println("Server has started with port " + server.getLocalPort());
+
+        } catch (Exception err) {
+            System.out.println("Error: "  + err);
+        }
         server.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
         
         // not sure what are these yet! 

@@ -14,17 +14,17 @@ public class DBConnection {
     final private int port = 3306;
     final private String instance = "comp4111project";
     final private String username = "root";
-    final private String password = "toor";
+    final private String password = "root"; // Changed
      
     public DBConnection() {
         try {
  
-            Class.forName("com.mysql.jdbc.Driver");
-            con= DriverManager.getConnection("jdbc:mysql://localhost:" + port + "/"+ instance, username, password);
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            con= DriverManager.getConnection("jdbc:mysql://localhost:" + port + "/" + instance + "?serverTimezone=UTC", username, password);
             st= con.createStatement();
-             
+            System.out.println("connection success");
         }catch(Exception ex){
-            System.out.println("Error: " + ex);
+            System.out.println("Error!!!: " + ex);
         }
     }
 
