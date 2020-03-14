@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 
@@ -18,12 +19,17 @@ public class DBConnection {
      
     public DBConnection() {
         try {
- 
-            Class.forName("com.mysql.jdbc.Driver");
-            con= DriverManager.getConnection("jdbc:mysql://localhost:" + port + "/"+ instance, username, password);
-            st= con.createStatement();
+        	try {
+        	    Class.forName("com.mysql.jdbc.Driver");
+        	}
+        	catch(ClassNotFoundException e) {
+        	    System.out.println(e);
+        	}
+        	String url = "jdbc:mysql://localhost:" + port + "/"+ instance;
+            con = DriverManager.getConnection(url, username, password);
+            st = con.createStatement();
              
-        }catch(Exception ex){
+        }catch(SQLException ex){
             System.out.println("Error: " + ex);
         }
     }
