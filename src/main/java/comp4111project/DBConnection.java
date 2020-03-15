@@ -79,43 +79,39 @@ public class DBConnection {
 
     public Vector getBooks(ConcurrentHashMap<String, String> queryPairs) {
         Vector<Book> books = new Vector<Book>();
-//        int limit;
-//
-//        if(queryPairs.containsKey("limit")) {
-//            limit = Integer.parseInt(queryPairs.get("limit"));
-//            System.out.println(limit);
-//        }
         try {
             String query = "SELECT * FROM book WHERE";
             for (Map.Entry<String, String> entry : queryPairs.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                System.out.println(key);
 
                 if(key.equals("author")) {
-                    System.out.println("yo");
                     query += " " + key + " LIKE" + " '%" + value + "%'" + " AND";
-                } else if(!key.equals("limit") || !key.equals("sortby") || !key.equals("order")) {
+                } else if(key.equals("id") || key.equals("title") || key.equals("publisher") || key.equals("year")) {
                     query += " " + key + " =" + " '" + value +"'" + " AND";
                 }
             }
             query = query.substring(0, query.length() - 3);
-            System.out.println(query);
+            if(queryPairs.containsKey("sortby")) {
+                query += " " + "ORDER BY " + queryPairs.get("sortby");
+            }
+            if(queryPairs.containsKey("order")) {
+                query += " " + queryPairs.get("order");
+            }
+            if(queryPairs.containsKey("limit")) {
+                query += " LIMIT " + queryPairs.get("limit");
+            }
 
-//            PreparedStatement preparedStmt = con.prepareStatement(query);
-//            preparedStmt.setString(1, "%" + queryPairs.get("author") + "%");
-////            preparedStmt.setString(2, id);
-//            rs = preparedStmt.executeQuery();
+            System.out.println(query);
             rs = st.executeQuery(query);
 
             System.out.println("Book LookUp");
             while(rs.next()) {
-                String bookID = rs.getString("idbook");
+                String bookID = rs.getString("id");
                 String title = rs.getString("title");
                 String bookAuthor = rs.getString("author");
                 String publisher = rs.getString("publisher");
                 int year = rs.getInt("year");
-                System.out.println("title= " + title+ " author= "+ bookAuthor + " publisher= "+ publisher + " year= " + year);
                 Book foundBook = new Book(Integer.parseInt(bookID), title, bookAuthor, publisher, year);
                 books.add(foundBook);
             }
@@ -123,7 +119,6 @@ public class DBConnection {
             System.err.println("Got an exception!");
             System.err.println(e.getMessage());
         }
-
         return books;
     }
 }

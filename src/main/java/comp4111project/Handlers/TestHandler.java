@@ -27,38 +27,7 @@ public class TestHandler implements HttpRequestHandler {
     public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
         String hi = "";
 
-        try {
-            URI uri = new URI(request.getRequestLine().getUri());
-            ConcurrentHashMap<String, String> query_pairs = new ConcurrentHashMap<String, String>();
-            String query = uri.getQuery();
-            String[] pairs = query.split("&");
-            for (String pair : pairs) {
-                int idx = pair.indexOf("=");
-                query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
-            }
 
-            for (ConcurrentHashMap.Entry<String, String> entry : query_pairs.entrySet()) {
-                System.out.println(entry.getKey() + "/" + entry.getValue());
-            }
-
-            DBConnection dbCon = new DBConnection(); // Problem
-            Vector<Book> foundBooks = new Vector(dbCon.getBooks(query_pairs));
-
-            Gson gson = new Gson();
-            JsonObject jsonResponse = new JsonObject();
-
-            jsonResponse.addProperty("FoundBooks", foundBooks.size());
-            jsonResponse.add("Results", gson.toJsonTree(foundBooks));
-
-
-            response.setStatusCode(HttpStatus.SC_OK);
-            response.setEntity(
-                new StringEntity(jsonResponse.toString(),
-                        ContentType.TEXT_PLAIN)
-            );
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
 
 //        if (request instanceof HttpEntityEnclosingRequest) {
 //            HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();

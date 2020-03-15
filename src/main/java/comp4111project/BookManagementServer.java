@@ -78,19 +78,16 @@ public class BookManagementServer {
 		UriHttpRequestHandlerMapper handlerMapper = new UriHttpRequestHandlerMapper();
 		LoginRequestHandler loginRequestHandler = new LoginRequestHandler();
 		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
-		DeleteBookRequestHandler deleteBookRequestHandler = new DeleteBookRequestHandler();
 
         LookupBookRequestHandler lookupBookRequestHandler = new LookupBookRequestHandler();
-        LoanBookRequestHandler loanBookRequestHandler = new LoanBookRequestHandler();
-        ReturnBookRequestHandler returnBookRequestHandler = new ReturnBookRequestHandler();
-
-        TestHandler testHandler = new TestHandler();
+        ManageBookRequestHandler manageBookRequestHandler = new ManageBookRequestHandler();
 		
 		handlerMapper.register(rootDirectory + "/login", loginRequestHandler);
 		handlerMapper.register(rootDirectory + "/logout", logoutRequestHandler);
-		handlerMapper.register(rootDirectory + "/books", deleteBookRequestHandler);
+//		handlerMapper.register(rootDirectory + "/books", deleteBookRequestHandler);
 		// other requestHandlers
-        handlerMapper.register( rootDirectory + "/test", testHandler);
+        handlerMapper.register( rootDirectory + "/books", lookupBookRequestHandler);
+        handlerMapper.register( rootDirectory + "/books/*", manageBookRequestHandler);
 		
 		/**
 		 * Set up the server
