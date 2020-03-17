@@ -1,4 +1,4 @@
-package comp4111project;
+package comp4111project.Handlers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +20,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 
+import comp4111project.BookManagementServer;
+
 public class LogoutRequestHandler implements HttpRequestHandler {
 		
 	@Override
@@ -30,12 +32,17 @@ public class LogoutRequestHandler implements HttpRequestHandler {
 		String url = request.getRequestLine().getUri();
 		
 		String token = url.substring(url.indexOf("token=")+6); 
+		System.out.println("Token:"+token);
 		
 		/**
 		 * if the user has logged in (valid token)
 		 * response: 200 OK 
 		 */
-        if(BookManagementServer.tokenToUser.get(token)!=null) {
+		
+		String usr = BookManagementServer.TOKEN_USER.get(token);
+        if(usr!=null) {
+        	BookManagementServer.TOKEN_USER.remove(token);
+        	BookManagementServer.USER_TOKEN.remove(usr);
         	response.setStatusCode(HttpStatus.SC_OK);
         }
         /**

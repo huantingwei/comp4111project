@@ -1,14 +1,17 @@
-package comp4111project;
+package comp4111project.Handlers;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.SecureRandom;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -31,20 +34,18 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class LoginRequestHandler implements HttpRequestHandler {
-	
-	private int BUFFER_SIZE = 16384;
-	
-	private String userTable = "user";
-	private String unameCol = "username";
-	private String pwdCol = "password";
-	
-	private Map<String,String> reqData;
-    private Connection conn;
-	private Statement stmt;
-	private ResultSet rs;
+import comp4111project.BookManagementServer;
+import comp4111project.JsonParser;
 
+public class LoginRequestHandler implements HttpRequestHandler {
+		
+	private String USERTABLE = "user";
+	private String USERNAME = "username";
+	private String PASSWORD = "password";
 	
+	private Map<String,Object> reqData;
+    private Connection conn;
+
 	public LoginRequestHandler() {
 		super();
 	};
@@ -61,7 +62,7 @@ public class LoginRequestHandler implements HttpRequestHandler {
 			if (entity != null) {
 				InputStream instream = entity.getContent();
 			    try {
-			    	reqData = readInputToMap(instream);
+			    	reqData = new JsonParser().readToMap(instream);
 			    } catch (Exception e){
 			    	e.printStackTrace();
 			    } finally {
@@ -75,88 +76,68 @@ public class LoginRequestHandler implements HttpRequestHandler {
 			
 		// establishing db connection
 		try {
-			conn = BookManagementServer.db.getConnection();
-			stmt = conn.createStatement();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		String usr = "'" + reqData.get("Username") + "'";
-		String pwd = "'" + reqData.get("Password") + "'";
-		
-		String query = 
-			//"IF EXISTS ( "
-				"SELECT 1 FROM " + userTable  + " WHERE "+  unameCol + "=" + usr + " AND " + pwdCol + "=" + pwd + ";";
-		try {
-			rs = stmt.executeQuery(query);
-			while(rs.next()) {
-				// if not logged in yet
-
-				if(BookManagementServer.userToToken.get(usr)==null) {
-                	
+			conn = BookManagementServer.DB.getConnection();
+			
+			String usr = (String) reqData.get("Username");
+			String pwd = (String) reqData.get("Password");
+			
+			String checkUserQuery = 
+					"SELECT 1 FROM " + USERTABLE  + " WHERE "+  USERNAME + "=" + " ? " + "AND " + PASSWORD + "=" + " ? ";
+			PreparedStatement stmt = conn.prepareStatement(checkUserQuery);
+			stmt.setString(1,  usr);
+			stmt.setString(2,  pwd);
+			ResultSet rs = stmt.executeQuery();
+			
+			/**
+			 * if username and password is correct
+			 */
+			if(rs.next()) { 
+				/**
+				 * if this user is not logging in right now
+				 */
+				if(BookManagementServer.USER_TOKEN.get(usr)==null) {
                 	response.setStatusCode(HttpStatus.SC_OK);
-                	
-                	// generate token
-                	// TODO: generate httpsession token
-                	// generating a unique
                 	String newToken = generateNewToken(usr);
                 	String rsp = "{ \"Token\" : \"" + newToken + "\" }";
                 	
                 	response.setEntity(
                             new StringEntity(rsp,
                                     ContentType.APPLICATION_JSON));
-                	return;
                 }
-                
-                // if already logged in
-                // response: 409 Conflict
-                // TODO: how to check logged in?
                 else {
                 	response.setStatusCode(HttpStatus.SC_CONFLICT);
-                	return;
                 }
-                
 			}
 			
-			// if either the user name or password is incorrect
-			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-			return;
+			/**
+			 *  if either the user name or password is incorrect
+			 */
+			else{
+				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			}
+			rs.close();
+			BookManagementServer.DB.closeConnection(conn);
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	private String readInputToString(InputStream instream) throws IOException {
-    	InputStreamReader insReader = new InputStreamReader(instream);
-    	BufferedReader reader = new BufferedReader(insReader);
-        StringBuffer sb = new StringBuffer();
-        String str;
-        while((str = reader.readLine())!= null){
-           sb.append(str);
-        }
-        // System.out.println(sb.toString());
-        return sb.toString();
-	}
-	
-	private Map<String, String> readInputToMap(InputStream instream) throws JsonParseException, JsonMappingException, IOException {
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    	int nRead;
-    	byte[] data = new byte[BUFFER_SIZE];
-		while ((nRead = instream.read(data, 0, data.length)) != -1) {
-			buffer.write(data, 0, nRead);
-		}
-    	ObjectMapper objectMapper = new ObjectMapper();
-    	// System.out.println("Map is: " + inputData);
-    	return objectMapper.readValue(data, HashMap.class);
-    	
+		
+		
 	}
 	
 	private String generateNewToken(String usr) {
-		// this_assumes_no_duplicate_user
-		String newToken = usr + "hi";
-    	BookManagementServer.userToToken.put(usr, newToken);
-    	BookManagementServer.tokenToUser.put(newToken, usr);
+		/**
+		 * assume no duplicate username
+		 * generate token by base64 encode the username
+		 */
+		//SecureRandom secureRandom = new SecureRandom(); 
+		Base64.Encoder base64Encoder = Base64.getUrlEncoder();
+		//byte[] randomBytes = new byte[24]
+		//secureRandom.nextBytes(randomBytes);		
+		String newToken = base64Encoder.encodeToString(usr.getBytes());
+		
+    	BookManagementServer.USER_TOKEN.put(usr, newToken);
+    	BookManagementServer.TOKEN_USER.put(newToken, usr);
     	return newToken;
 	}
 }
