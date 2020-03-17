@@ -1,55 +1,73 @@
 package comp4111project;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
+public class DBConnection implements DBSource {
+    private Properties props;
+    private String URL;
+    private String USER;
+    private String PASSWD;
+    private int max; // maximum number of connections in the connection pool
+    private List<Connection> connections;
 
-public class DBConnection {
-	private Connection con;
-    private Statement st;
-    private ResultSet rs;
-    final private int port = 3306;
-    final private String instance = "comp4111project";
-    final private String username = "root";
-    final private String password = "toor";
-     
-    public DBConnection() {
-        try {
-        	try {
-        	    Class.forName("com.mysql.jdbc.Driver");
-        	}
-        	catch(ClassNotFoundException e) {
-        	    System.out.println(e);
-        	}
-        	String url = "jdbc:mysql://localhost:" + port + "/"+ instance;
-            con = DriverManager.getConnection(url, username, password);
-            st = con.createStatement();
-             
-        }catch(SQLException ex){
-            System.out.println("Error: " + ex);
-        }
+    public DBConnection() throws IOException, ClassNotFoundException {
+        this("jdbc.properties");
+    }
+    
+    
+    public DBConnection(String configFile) throws IOException, ClassNotFoundException {
+        props = new Properties();
+        props.load(new FileInputStream(configFile));
+		
+		URL = props.getProperty("comp4111project.url");
+		USER = props.getProperty("comp4111project.user");
+		PASSWD = props.getProperty("comp4111project.password");
+
+        max = Integer.parseInt(props.getProperty("comp4111project.poolmax"));
+        Class.forName(props.getProperty("comp4111project.driver"));
+        
+        connections = new ArrayList<Connection>();
     }
 
+    public void createDatabase(String dbName) throws SQLException {
+    	Connection conn = getConnection();
+    	
+    	String query = "CREATE DATABASE ?";
+    	PreparedStatement stmt = conn.prepareStatement(query);
+    	stmt.setString(1, dbName);
+    	stmt.executeUpdate();
+    }
     /**
-     * 3 columns: iduser(primary key), username, password
+     * @return Connection, retrieved from the connection pool
      */
-    public void getAllUser() {
-        try {
-            String query = "select * from user";
-            rs = st.executeQuery(query);
-            System.out.println("Records for Database");
-            while(rs.next()) {
-                int id = rs.getInt("iduser");
-                String username = rs.getString("username");
-                String password = rs.getString("password");
-                System.out.println("id="+id+" name="+username+" password="+password);
-            }
-        }catch(Exception ex) {
-            System.out.println(ex);
+    public synchronized Connection getConnection() throws SQLException {
+        if(connections.size() == 0) {
+            return DriverManager.getConnection(URL, USER, PASSWD);
+        }
+        else {
+            int lastIndex = connections.size() - 1;
+            return connections.remove(lastIndex);
+        }
+    }
+    /**
+     * When closing the connection, add it to the connection pool for reuse
+     */
+    public synchronized void closeConnection(Connection conn) throws SQLException {
+        if(connections.size() == max) {
+            conn.close();
+        }
+        else {
+            connections.add(conn);
         }
     }
     
@@ -58,7 +76,7 @@ public class DBConnection {
     		String query = "insert into user (iduser, username, password)" + "values (?, ?, ?)";
     		
     		for(int i=0; i<10; i++) {
-    		      PreparedStatement preparedStmt = con.prepareStatement(query);
+    		      PreparedStatement preparedStmt = getConnection().prepareStatement(query);
     		      preparedStmt.setInt (1, i);
     		      preparedStmt.setString (2, "user"+i);
     		      preparedStmt.setString (3, "passwd"+i);
