@@ -39,37 +39,41 @@ public class QueryManager {
     }
 
     public Vector getBooks(ConcurrentHashMap<String, String> queryPairs) {
+        queryPairs.remove("token");
         Vector<Book> books = new Vector<Book>();
+        String searchQuery;
         try {
             Connection conn = connectionPool.getConnection();
+            if(queryPairs.isEmpty()) {
+                searchQuery = "SELECT * FROM book";
+            } else {
+                searchQuery = "SELECT * FROM book WHERE";
+                for (ConcurrentHashMap.Entry<String, String> entry : queryPairs.entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
 
-            String searchQuery = "SELECT * FROM book WHERE";
-            for (ConcurrentHashMap.Entry<String, String> entry : queryPairs.entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-
-                if(key.equals("author")) {
-                    searchQuery += " " + key + " LIKE" + " '%" + value + "%'" + " AND";
-                } else if(key.equals("id") || key.equals("title") || key.equals("publisher") || key.equals("year")) {
-                    searchQuery += " " + key + " =" + " '" + value +"'" + " AND";
+                    if(key.equals("author")) {
+                        searchQuery += " " + key + " LIKE" + " '%" + value + "%'" + " AND";
+                    } else if(key.equals("id") || key.equals("title") || key.equals("publisher") || key.equals("year")) {
+                        searchQuery += " " + key + " =" + " '" + value +"'" + " AND";
+                    }
                 }
-            }
-            searchQuery = searchQuery.substring(0, searchQuery.length() - 3);
-            if(queryPairs.containsKey("sortby")) {
-                searchQuery += " " + "ORDER BY " + queryPairs.get("sortby");
-            }
-            if(queryPairs.containsKey("order")) {
-                searchQuery += " " + queryPairs.get("order");
-            }
-            if(queryPairs.containsKey("limit")) {
-                searchQuery += " LIMIT " + queryPairs.get("limit");
+                searchQuery = searchQuery.substring(0, searchQuery.length() - 3);
+                if(queryPairs.containsKey("sortby")) {
+                    searchQuery += " " + "ORDER BY " + queryPairs.get("sortby");
+                }
+                if(queryPairs.containsKey("order")) {
+                    searchQuery += " " + queryPairs.get("order");
+                }
+                if(queryPairs.containsKey("limit")) {
+                    searchQuery += " LIMIT " + queryPairs.get("limit");
+                }
             }
 
             System.out.println(searchQuery);
             PreparedStatement searchStmt = conn.prepareStatement(searchQuery);
             ResultSet rs = searchStmt.executeQuery();
 
-            System.out.println("Book LookUp");
             while(rs.next()) {
                 String bookID = rs.getString("id");
                 String title = rs.getString("title");

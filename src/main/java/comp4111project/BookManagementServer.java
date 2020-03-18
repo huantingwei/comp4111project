@@ -89,7 +89,7 @@ public class BookManagementServer {
 //		handlerMapper.register(ROOT_DIRECTORY+ "/login", loginRequestHandler);
 //		handlerMapper.register(ROOT_DIRECTORY + "/logout", logoutRequestHandler);
 		// TODO: how to map request handlers under same path
-//        handlerMapper.register(ROOT_DIRECTORY + "/books?", lookupBookRequestHandler);
+        handlerMapper.register(ROOT_DIRECTORY + "/books", lookupBookRequestHandler);
 		handlerMapper.register(ROOT_DIRECTORY + "/books/*", manageBookRequestHandler);
 //		handlerMapper.register(ROOT_DIRECTORY + "/books", addBookRequestHandler);
 		// other requestHandlers
