@@ -1,9 +1,12 @@
 package comp4111project.Handlers;
 
-//import com.google.gson.Gson;
-//import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import comp4111project.DBConnection;
 import comp4111project.Model.Book;
+import comp4111project.QueryManager;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -38,21 +41,26 @@ public class LookupBookRequestHandler implements HttpRequestHandler {
                 System.out.println(entry.getKey() + "/" + entry.getValue());
             }
 
-//            DBConnection dbCon = new DBConnection(); // Problem
-//            Vector<Book> foundBooks = new Vector(dbCon.getBooks(query_pairs));
+            Vector<Book> foundBooks = new Vector(QueryManager.getInstance().getBooks(query_pairs));
 
-//            Gson gson = new Gson();
-//            JsonObject jsonResponse = new JsonObject();
+            if (foundBooks.isEmpty()) {
+                response.setStatusCode(HttpStatus.SC_NO_CONTENT);
+                response.setEntity(
+                        new StringEntity("204 No Content",
+                                ContentType.TEXT_PLAIN)
+                );
+            } else {
+                ObjectMapper mapper = new ObjectMapper();
+                ObjectNode responseObject = mapper.createObjectNode();
+                responseObject.put("FoundBooks", foundBooks.size());
+                responseObject.putPOJO("Results", foundBooks);
 
-//            jsonResponse.addProperty("FoundBooks", foundBooks.size());
-//            jsonResponse.add("Results", gson.toJsonTree(foundBooks));
-
-
-            response.setStatusCode(HttpStatus.SC_OK);
-            response.setEntity(
-                    new StringEntity("jsonResponse.toString()",
-                            ContentType.TEXT_PLAIN)
-            );
+                response.setStatusCode(HttpStatus.SC_OK);
+                response.setEntity(
+                        new StringEntity(responseObject.toString(),
+                                ContentType.TEXT_PLAIN)
+                );
+            }
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }

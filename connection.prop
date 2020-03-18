@@ -1,9 +1,13 @@
 comp4111project.driver=com.mysql.jdbc.Driver
-comp4111project.url=jdbc:mysql://localhost:3306/comp4111
+comp4111project.url=jdbc:mysql://localhost:3306/comp4111project
 comp4111project.user=root
-comp4111project.password=toor
+comp4111project.password=root
 comp4111project.poolmax=100
 comp4111project.dbname=comp4111
 comp4111project.usertbname=user
 comp4111project.booktbname=book
 comp4111project.initnumuser=10000
+
+host="localhost"
+port=8081
+root_directory="/BookManagementService"

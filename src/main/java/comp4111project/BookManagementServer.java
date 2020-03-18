@@ -22,10 +22,10 @@ import org.apache.http.ssl.SSLContexts;
 
 public class BookManagementServer {
 
-	// database connection configuration file (in root folder)
-	final static String DB_CONFIG_FILE = "connection.prop";
-    // global database connection pool
-    public static DBConnection DB;	
+//	// database connection configuration file (in root folder)
+//	final static String DB_CONFIG_FILE = "connection.prop";
+//    // global database connection pool
+//    public static DBConnection DB;
 	
 	public static String HOST = "localhost";
 	public static int PORT = 8081;
@@ -59,7 +59,7 @@ public class BookManagementServer {
 		/**
 		 * Database connection: use a "connection pool"
 		 */
-		DB = new DBConnection(DB_CONFIG_FILE);		
+//		DB = new DBConnection(DB_CONFIG_FILE);
 		/**
 		 * Don't really know what these are yet!
 		 */
@@ -80,18 +80,18 @@ public class BookManagementServer {
          * Map the RequestHandlers to each urls
          */
 		UriHttpRequestHandlerMapper handlerMapper = new UriHttpRequestHandlerMapper();
-		LoginRequestHandler loginRequestHandler = new LoginRequestHandler();
-		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
-		AddBookRequestHandler addBookRequestHandler = new AddBookRequestHandler();
+//		LoginRequestHandler loginRequestHandler = new LoginRequestHandler();
+//		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
+//		AddBookRequestHandler addBookRequestHandler = new AddBookRequestHandler();
 		ManageBookRequestHandler manageBookRequestHandler = new ManageBookRequestHandler();
         LookupBookRequestHandler lookupBookRequestHandler = new LookupBookRequestHandler();
 		
-		handlerMapper.register(ROOT_DIRECTORY+ "/login", loginRequestHandler);
-		handlerMapper.register(ROOT_DIRECTORY + "/logout", logoutRequestHandler);
+//		handlerMapper.register(ROOT_DIRECTORY+ "/login", loginRequestHandler);
+//		handlerMapper.register(ROOT_DIRECTORY + "/logout", logoutRequestHandler);
 		// TODO: how to map request handlers under same path
-//        handlerMapper.register(ROOT_DIRECTORY + "/books?", lookupBookRequestHandler);
+        handlerMapper.register(ROOT_DIRECTORY + "/books", lookupBookRequestHandler);
 		handlerMapper.register(ROOT_DIRECTORY + "/books/*", manageBookRequestHandler);
-		handlerMapper.register(ROOT_DIRECTORY + "/books", addBookRequestHandler);
+//		handlerMapper.register(ROOT_DIRECTORY + "/books", addBookRequestHandler);
 		// other requestHandlers
 		
 		/**
