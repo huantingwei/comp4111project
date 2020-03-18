@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 
+import comp4111project.Handlers.*;
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.config.SocketConfig;
@@ -18,11 +19,6 @@ import org.apache.http.impl.bootstrap.HttpServer;
 import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.apache.http.protocol.UriHttpRequestHandlerMapper;
 import org.apache.http.ssl.SSLContexts;
-
-import comp4111project.Handlers.AddBookRequestHandler;
-import comp4111project.Handlers.LoginRequestHandler;
-import comp4111project.Handlers.LogoutRequestHandler;
-import comp4111project.Handlers.ManageBookRequestHandler;
 
 public class BookManagementServer {
 
@@ -88,10 +84,12 @@ public class BookManagementServer {
 		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
 		AddBookRequestHandler addBookRequestHandler = new AddBookRequestHandler();
 		ManageBookRequestHandler manageBookRequestHandler = new ManageBookRequestHandler();
+        LookupBookRequestHandler lookupBookRequestHandler = new LookupBookRequestHandler();
 		
 		handlerMapper.register(ROOT_DIRECTORY+ "/login", loginRequestHandler);
 		handlerMapper.register(ROOT_DIRECTORY + "/logout", logoutRequestHandler);
 		// TODO: how to map request handlers under same path
+//        handlerMapper.register(ROOT_DIRECTORY + "/books?", lookupBookRequestHandler);
 		handlerMapper.register(ROOT_DIRECTORY + "/books/*", manageBookRequestHandler);
 		handlerMapper.register(ROOT_DIRECTORY + "/books", addBookRequestHandler);
 		// other requestHandlers
