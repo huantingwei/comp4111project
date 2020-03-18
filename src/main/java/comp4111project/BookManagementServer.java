@@ -110,8 +110,9 @@ public class BookManagementServer {
                 .setExceptionLogger(new StdErrorExceptionLogger())
                 .setHandlerMapper(handlerMapper)
                 .create();
-        
+
         server.start();
+        System.out.println("Server has started with port " + server.getLocalPort());
         server.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
         
         // not sure what are these yet! 

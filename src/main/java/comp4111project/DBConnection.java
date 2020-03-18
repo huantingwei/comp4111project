@@ -51,7 +51,7 @@ public class DBConnection implements DBSource {
         USER_TB_COL = new ArrayList<String>(Arrays.asList("userid", "username", "password"));
         
         INIT_NUM_USER = Integer.parseInt(props.getProperty("comp4111project.initnumuser"));
-        configureDatabase(DB_NAME, USER_TB_NAME, USER_TB_COL, BOOK_TB_NAME, INIT_NUM_USER);
+//        configureDatabase(DB_NAME, USER_TB_NAME, USER_TB_COL, BOOK_TB_NAME, INIT_NUM_USER);
     }
    
     

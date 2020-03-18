@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.util.JSONPObject;
 
 import comp4111project.BookManagementServer;
 
+import comp4111project.QueryManager;
 import org.apache.http.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -50,11 +51,7 @@ public class ManageBookRequestHandler implements HttpRequestHandler {
 					String[] paths = fullPath.split("/");
 					String bookID = paths[paths.length - 1];
 
-					if(isReturningBook.get("Available")) {
-						System.out.println("this is returning request");
-					} else {
-						LoanBook(response, bookID);
-					}
+					loanOrReturnBook(response, QueryManager.getInstance().returnAndLoanBook(bookID, isReturningBook.get("Available")));
 				}
 				break;
 			/**
@@ -121,10 +118,31 @@ public class ManageBookRequestHandler implements HttpRequestHandler {
 		}
 	}
 
-	public void LoanBook(HttpResponse response, String bookID) {
-		response.setEntity(
-				new StringEntity("Loaning a book",
-						ContentType.TEXT_PLAIN)
-		);
+	public void loanOrReturnBook(HttpResponse response, int result) {
+		switch(result) {
+			case(0):
+				response.setStatusCode(HttpStatus.SC_OK);
+				response.setEntity(
+						new StringEntity("Book Returned/Loaned Successfully",
+								ContentType.TEXT_PLAIN)
+				);
+				break;
+			case(1):
+				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+				response.setEntity(
+						new StringEntity("No Book Record Found",
+								ContentType.TEXT_PLAIN)
+				);
+				break;
+			case(2):
+				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				response.setEntity(
+						new StringEntity("This book has already been returned/loaned",
+								ContentType.TEXT_PLAIN)
+				);
+				break;
+			default:
+				break;
+		}
 	}
 }
