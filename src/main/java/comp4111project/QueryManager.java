@@ -3,15 +3,31 @@ package comp4111project;
 import comp4111project.Model.Book;
 
 import javax.xml.transform.Result;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class QueryManager {
-    private QueryManager() {
+    private DBConnection connectionPool;
 
+
+
+    private QueryManager() {
+        {
+            try {
+                connectionPool = new DBConnection("connection.prop");
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private static class BillPushSingleton {
@@ -25,7 +41,7 @@ public class QueryManager {
     public Vector getBooks(ConcurrentHashMap<String, String> queryPairs) {
         Vector<Book> books = new Vector<Book>();
         try {
-            Connection conn = BookManagementServer.DB.getConnection();
+            Connection conn = connectionPool.getConnection();
 
             String searchQuery = "SELECT * FROM book WHERE";
             for (ConcurrentHashMap.Entry<String, String> entry : queryPairs.entrySet()) {
@@ -63,7 +79,9 @@ public class QueryManager {
                 Book foundBook = new Book(Integer.parseInt(bookID), title, bookAuthor, publisher, year);
                 books.add(foundBook);
             }
-            BookManagementServer.DB.closeConnection(conn);
+            searchStmt.close();
+            rs.close();
+            connectionPool.closeConnection(conn);
             return books;
         } catch (Exception e) {
             System.err.println("Got an exception!");
@@ -77,7 +95,7 @@ public class QueryManager {
     public int returnAndLoanBook(String bookID, Boolean isReturningBook) {
         String updateQuery;
         try {
-            Connection conn = BookManagementServer.DB.getConnection();
+            Connection conn = connectionPool.getConnection();
             String searchQuery = "SELECT available from book WHERE id =" + " '" + bookID + "' ";
             PreparedStatement searchBookStmt = conn.prepareStatement(searchQuery);
             ResultSet rs = searchBookStmt.executeQuery();
@@ -95,19 +113,21 @@ public class QueryManager {
 
                         int result = updateAvailabilityStmt.executeUpdate();
 
+                        rs.close();
+                        updateAvailabilityStmt.close();
+                        connectionPool.closeConnection(conn);
+
                         if(result == 1) {
-                            BookManagementServer.DB.closeConnection(conn);
                             return 0; // OK
                         } else {
-                            BookManagementServer.DB.closeConnection(conn);
                             return 2; // Bad Request
                         }
 
                     } catch(Exception ex) {
                         return 2; // Bad Request
                     } finally {
-                        System.out.println("Closing connection now...");
-                        BookManagementServer.DB.closeConnection(conn);
+                        rs.close();
+                        connectionPool.closeConnection(conn);
                     }
 
                 } else {
