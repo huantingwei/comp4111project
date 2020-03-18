@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class QueryManager {
     private DBConnection connectionPool;
-
-
+    private final static ConcurrentHashMap<String, String> USER_TOKEN = new ConcurrentHashMap<String, String>();
+    private final static ConcurrentHashMap<String, String> TOKEN_USER = new ConcurrentHashMap<String, String>();
 
     private QueryManager() {
         {
@@ -36,6 +36,10 @@ public class QueryManager {
 
     public static QueryManager getInstance() {
         return BillPushSingleton.INSTANCE;
+    }
+
+    public Boolean authorizeToken() {
+        return true;
     }
 
     public Vector getBooks(ConcurrentHashMap<String, String> queryPairs) {

@@ -38,6 +38,9 @@ public class ManageBookRequestHandler implements HttpRequestHandler {
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
 		System.out.println("Managing Book");
 		System.out.println(request.getRequestLine().getMethod());
+		if(QueryManager.getInstance().authorizeToken()) {
+
+		}
 
 		switch (request.getRequestLine().getMethod()) {
 			case("PUT"):
@@ -57,8 +60,8 @@ public class ManageBookRequestHandler implements HttpRequestHandler {
 			/**
 			 * Delete a book
 			 */
-			case("DELETE"):
-				
+//			case("DELETE"):
+//
 //				try {
 //					Connection conn = BookManagementServer.DB.getConnection();
 //
