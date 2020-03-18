@@ -35,7 +35,7 @@ public class DBConnection {
             con = DriverManager.getConnection(url, username, password);
             st = con.createStatement();
              
-        }catch(SQLException ex){
+        } catch(SQLException ex){
             System.out.println("Error: " + ex);
         }
     }
@@ -120,5 +120,49 @@ public class DBConnection {
             System.err.println(e.getMessage());
         }
         return books;
+    }
+
+    // Returns an integer depending on the status: 0 - 200 OK 1 - No book record 2 - bad request
+    public int returnAndLoanBook(String bookID, Boolean isReturningBook) {
+        String updateQuery;
+        try {
+            String searchQuery = "SELECT available from book WHERE id =" + " '" + bookID + "' ";
+            rs = st.executeQuery(searchQuery);
+
+            if (rs.next()) {
+                if(rs.getBoolean("available") == (isReturningBook ? false : true)) {
+                    System.out.println("ready to be returned/loaned");
+                    try {
+                        if(isReturningBook) {
+                            updateQuery = "UPDATE book SET available = '1' WHERE id =" + " '" + bookID + "' ";
+                        } else {
+                            updateQuery = "UPDATE book SET available = '0' WHERE id =" + " '" + bookID + "' ";
+                        }
+
+                        int result = st.executeUpdate(updateQuery);
+
+                        if(result == 1) {
+                            return 0; // OK
+                        } else {
+                            return 2; // Bad Request
+                        }
+
+                    } catch(Exception ex) {
+                        return 2; // Bad Request
+                    }
+
+                } else {
+                    System.out.println("Book already returned");
+                    return 2; // The book is already returned
+                }
+            } else {
+                System.out.println("no record");
+                return 1; // No book record
+            }
+
+        } catch(Exception ex) {
+            System.out.println("error " + ex);
+            return 2; // Bad Request
+        }
     }
 }

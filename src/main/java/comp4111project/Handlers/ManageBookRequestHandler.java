@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.JSONPObject;
+import comp4111project.DBConnection;
 import org.apache.http.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -18,9 +19,6 @@ public class ManageBookRequestHandler implements HttpRequestHandler {
 
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-		System.out.println("Manageing Book");
-		System.out.println(request.getRequestLine().getMethod());
-
 		switch (request.getRequestLine().getMethod()) {
 			case("PUT"):
 				if (request instanceof HttpEntityEnclosingRequest) {
@@ -33,11 +31,7 @@ public class ManageBookRequestHandler implements HttpRequestHandler {
 					String[] paths = fullPath.split("/");
 					String bookID = paths[paths.length - 1];
 
-					if(isReturningBook.get("Available")) {
-						System.out.println("this is returning request");
-					} else {
-						LoanBook(response, bookID);
-					}
+					returnBook(response, bookID, isReturningBook.get("Available"));
 				}
 				break;
 			case("DELETE"):
@@ -52,10 +46,34 @@ public class ManageBookRequestHandler implements HttpRequestHandler {
 		}
 	}
 
-	public void LoanBook(HttpResponse response, String bookID) {
-		response.setEntity(
-				new StringEntity("Loaning a book",
-						ContentType.TEXT_PLAIN)
-		);
+	public void returnBook(HttpResponse response, String bookID, Boolean isReturningBook) {
+		DBConnection dbCon1 = new DBConnection();
+		switch(dbCon1.returnAndLoanBook(bookID, isReturningBook)) {
+			case(0):
+				response.setStatusCode(HttpStatus.SC_OK);
+				response.setEntity(
+					new StringEntity("Book Returned/Loaned Successfully",
+							ContentType.TEXT_PLAIN)
+				);
+				break;
+			case(1):
+				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+				response.setEntity(
+						new StringEntity("No Book Record Found",
+								ContentType.TEXT_PLAIN)
+				);
+				break;
+			case(2):
+				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				response.setEntity(
+						new StringEntity("Bad Request",
+								ContentType.TEXT_PLAIN)
+				);
+				break;
+			default:
+				break;
+		}
+
+
 	}
 }
