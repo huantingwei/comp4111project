@@ -2,6 +2,8 @@ package comp4111project;
 
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +29,7 @@ public class BookManagementServer {
 	// database connection configuration file (in root folder)
 	final static String DB_CONFIG_FILE = "connection.prop";
     // global database connection pool
-    public static DBSource DB;	
+    public static DBConnection DB;	
 	
 	public static String HOST = "localhost";
 	public static int PORT = 8081;
@@ -61,9 +63,7 @@ public class BookManagementServer {
 		/**
 		 * Database connection: use a "connection pool"
 		 */
-		DB = new DBConnection(DB_CONFIG_FILE);
-		
-		
+		DB = new DBConnection(DB_CONFIG_FILE);		
 		/**
 		 * Don't really know what these are yet!
 		 */
@@ -86,7 +86,6 @@ public class BookManagementServer {
 		UriHttpRequestHandlerMapper handlerMapper = new UriHttpRequestHandlerMapper();
 		LoginRequestHandler loginRequestHandler = new LoginRequestHandler();
 		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
-		DeleteBookRequestHandler deleteBookRequestHandler = new DeleteBookRequestHandler();
 		AddBookRequestHandler addBookRequestHandler = new AddBookRequestHandler();
 		ManageBookRequestHandler manageBookRequestHandler = new ManageBookRequestHandler();
 		
