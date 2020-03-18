@@ -48,7 +48,7 @@ public class DBConnection implements DBSource {
         USER_TB_NAME = props.getProperty("comp4111project.usertbname");
         BOOK_TB_NAME = props.getProperty("comp4111project.booktbname");
         // TODO: put into connection.prop
-        USER_TB_COL = new ArrayList<String>(Arrays.asList("userid", "username", "password"));
+        USER_TB_COL = new ArrayList<String>(Arrays.asList("userid", "Username", "Password"));
         
         INIT_NUM_USER = Integer.parseInt(props.getProperty("comp4111project.initnumuser"));
 //        configureDatabase(DB_NAME, USER_TB_NAME, USER_TB_COL, BOOK_TB_NAME, INIT_NUM_USER);

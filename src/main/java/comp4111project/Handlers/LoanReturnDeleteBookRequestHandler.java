@@ -24,24 +24,15 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.util.EntityUtils;
 
-public class ManageBookRequestHandler implements HttpRequestHandler {
-	
-	private String BOOKTABLE = "book";
-	private String ID = "bookid";
-	private String TITLE = "Title";
-	private String AUTHOR = "Author";
-	private String PUBLISHER = "Publisher";
-	private String YEAR = "Year";
-	private String AVAILABLE = "Available";
+public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 	
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
 		System.out.println("Managing Book");
 		System.out.println(request.getRequestLine().getMethod());
-		if(QueryManager.getInstance().authorizeToken()) {
 
-		}
-
+		// TODO: validate token
+        
 		switch (request.getRequestLine().getMethod()) {
 			case("PUT"):
 				if (request instanceof HttpEntityEnclosingRequest) {
@@ -57,58 +48,20 @@ public class ManageBookRequestHandler implements HttpRequestHandler {
 					loanOrReturnBook(response, QueryManager.getInstance().returnAndLoanBook(bookID, isReturningBook.get("Available")));
 				}
 				break;
-			/**
-			 * Delete a book
-			 */
-//			case("DELETE"):
-//
-//				try {
-//					Connection conn = BookManagementServer.DB.getConnection();
-//
-//					URI uri = new URI(request.getRequestLine().getUri());
-//					String path = uri.getPath();
-//					String[] pairs = path.split("/");
-//					Integer bookID = Integer.parseInt(pairs[pairs.length-1]);
-//
-//					String findBookQuery =
-//							"SELECT * FROM " + BOOKTABLE  + " WHERE "+  ID + "=?" ;
-//					PreparedStatement findBookStmt = conn.prepareStatement(findBookQuery);
-//					findBookStmt.setInt (1, bookID);
-//					findBookStmt.execute();
-//
-//					ResultSet rs = findBookStmt.getResultSet();
-//
-//					/**
-//					 * book exists, delete successfully
-//					 */
-//					if(rs.next()) {
-//						System.out.println(ID+" exists, can be deleted");
-//						String deleteBookQuery ="DELETE FROM " + BOOKTABLE + " WHERE " + ID + "= ?";
-//
-//						PreparedStatement deleteBookStmt = conn.prepareStatement(deleteBookQuery);
-//						deleteBookStmt.setInt (1, bookID);
-//
-//						int affectedRows = deleteBookStmt.executeUpdate();
-//						if (affectedRows == 0) {
-//							System.out.println("Failed to delete a book.");
-//				            throw new SQLException("Failed to delete a book.");
-//				        }
-//						response.setStatusCode(HttpStatus.SC_OK);
-//						deleteBookStmt.close();
-//					}
-//					/**
-//					 * book doesn't exist, delete unsuccessfully
-//					 */
-//					else {
-//						response = new BasicHttpResponse(HttpVersion.HTTP_1_1,
-//							    HttpStatus.SC_BAD_REQUEST, "No book record");
-//					}
-//					rs.close();
-//					BookManagementServer.DB.closeConnection(conn);
-//
-//				} catch (SQLException | URISyntaxException e) {
-//					e.printStackTrace();
-//				}
+
+			case("DELETE"):
+				try {
+					URI uri = new URI(request.getRequestLine().getUri());
+					String path = uri.getPath();
+					String[] pairs = path.split("/");
+					Integer bookID = Integer.parseInt(pairs[pairs.length-1]);
+					
+					deleteBook(response, QueryManager.getInstance().deleteBook(bookID));
+					
+				} catch (URISyntaxException e) {
+					e.printStackTrace();
+				}
+
 				break;
 				
 			default:
@@ -120,7 +73,17 @@ public class ManageBookRequestHandler implements HttpRequestHandler {
 				break;
 		}
 	}
-
+	
+	private void deleteBook(HttpResponse response, Boolean result) {
+		if(result) {
+			response.setStatusCode(HttpStatus.SC_OK);
+		}
+		else {
+			response = new BasicHttpResponse(HttpVersion.HTTP_1_1,
+				    HttpStatus.SC_BAD_REQUEST, "No book record");
+		}
+	}
+	
 	public void loanOrReturnBook(HttpResponse response, int result) {
 		switch(result) {
 			case(0):

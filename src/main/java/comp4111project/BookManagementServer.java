@@ -30,12 +30,6 @@ public class BookManagementServer {
 	public static String HOST = "localhost";
 	public static int PORT = 8081;
 	public static String ROOT_DIRECTORY = "/BookManagementService";
-	
-
-    // global record of access token (whether the user is logged in or not)
-    // not sure if this is correct
-    public final static ConcurrentHashMap<String, String> USER_TOKEN = new ConcurrentHashMap<String, String>();    
-    public final static ConcurrentHashMap<String, String> TOKEN_USER = new ConcurrentHashMap<String, String>(); 
     
     static class StdErrorExceptionLogger implements ExceptionLogger {
 
@@ -56,13 +50,6 @@ public class BookManagementServer {
     
 	public static void main(String[] args) throws Exception {
 		
-		/**
-		 * Database connection: use a "connection pool"
-		 */
-//		DB = new DBConnection(DB_CONFIG_FILE);
-		/**
-		 * Don't really know what these are yet!
-		 */
         SSLContext sslContext = null;
         if (PORT == 8443) {
             // Initialize SSL context
@@ -80,19 +67,15 @@ public class BookManagementServer {
          * Map the RequestHandlers to each urls
          */
 		UriHttpRequestHandlerMapper handlerMapper = new UriHttpRequestHandlerMapper();
-//		LoginRequestHandler loginRequestHandler = new LoginRequestHandler();
-//		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
-//		AddBookRequestHandler addBookRequestHandler = new AddBookRequestHandler();
-		ManageBookRequestHandler manageBookRequestHandler = new ManageBookRequestHandler();
-        LookupBookRequestHandler lookupBookRequestHandler = new LookupBookRequestHandler();
+		LoginRequestHandler loginRequestHandler = new LoginRequestHandler();
+		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
+		LoanReturnDeleteBookRequestHandler manageBookRequestHandler = new LoanReturnDeleteBookRequestHandler();
+        AddLookUpBookRequestHandler addLookUpBookRequestHandler = new AddLookUpBookRequestHandler();
 		
-//		handlerMapper.register(ROOT_DIRECTORY+ "/login", loginRequestHandler);
-//		handlerMapper.register(ROOT_DIRECTORY + "/logout", logoutRequestHandler);
-		// TODO: how to map request handlers under same path
-        handlerMapper.register(ROOT_DIRECTORY + "/books", lookupBookRequestHandler);
+		handlerMapper.register(ROOT_DIRECTORY+ "/login", loginRequestHandler);
+		handlerMapper.register(ROOT_DIRECTORY + "/logout", logoutRequestHandler);
+        handlerMapper.register(ROOT_DIRECTORY + "/books", addLookUpBookRequestHandler);
 		handlerMapper.register(ROOT_DIRECTORY + "/books/*", manageBookRequestHandler);
-//		handlerMapper.register(ROOT_DIRECTORY + "/books", addBookRequestHandler);
-		// other requestHandlers
 		
 		/**
 		 * Set up the server
