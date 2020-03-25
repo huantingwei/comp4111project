@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -35,7 +36,7 @@ public class LogoutRequestHandler implements HttpRequestHandler {
 		// user has logged in (valid token)
 		String usr = QueryManager.getInstance().getUserFromToken(token);
         if(usr!=null) {
-        	QueryManager.getInstance().removeUserAndToken(token);
+			Executors.newSingleThreadExecutor().execute(() -> QueryManager.getInstance().removeUserAndToken(token));
         	response.setStatusCode(HttpStatus.SC_OK);
         }
         // user has not logged in (invalid token)
