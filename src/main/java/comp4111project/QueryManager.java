@@ -2,11 +2,6 @@ package comp4111project;
 
 import comp4111project.Model.Book;
 
-import javax.xml.transform.Result;
-
-import org.apache.http.HttpStatus;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -14,15 +9,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public class QueryManager {
+	private String DBConfigFile = "connection.prop";
     private DBConnection connectionPool;
-    private final static ConcurrentHashMap<String, String> user_token = new ConcurrentHashMap<String, String>();
-    private final static ConcurrentHashMap<String, String> token_user = new ConcurrentHashMap<String, String>();
-
+    
+    
 	private String BOOKTABLE = "book";
 	private String USERTABLE = "user";
 	private String USERNAME = "Username";
@@ -37,7 +32,7 @@ public class QueryManager {
     private QueryManager() {
         {
             try {
-                connectionPool = new DBConnection("connection.prop");
+                connectionPool = new DBConnection(DBConfigFile);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -45,6 +40,7 @@ public class QueryManager {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+            
         }
     }
 
@@ -55,29 +51,8 @@ public class QueryManager {
     public static QueryManager getInstance() {
         return BillPushSingleton.INSTANCE;
     }
-
-    public Boolean validateToken(String token) {
-        return token_user.get(token) != null;
-    }
-
-    public Boolean validateUser(String username) {
-    	return user_token.get(username) != null;
-    }
-
-    public String getUserFromToken(String token) {
-    	return token_user.get(token);
-    }
-    public void removeUserAndToken(String token) {
-    	String usr = token_user.get(token);
-    	token_user.remove(token);
-    	user_token.remove(usr);
-    }
-    public void addUserAndToken(String user, String token) {
-    	token_user.put(token, user);
-    	user_token.put(user, token);
-    }
     
-    public Vector getBooks(ConcurrentHashMap<String, String> queryPairs) {
+    public Vector<Book> getBooks(ConcurrentHashMap<String, String> queryPairs) {
         queryPairs.remove("token");
         Vector<Book> books = new Vector<Book>();
         String searchQuery;
@@ -139,23 +114,24 @@ public class QueryManager {
         String updateQuery;
         try {
             Connection conn = connectionPool.getConnection();
-            String searchQuery = "SELECT available from book WHERE id =" + " '" + bookID + "' ";
+            String searchQuery = "SELECT " + AVAILABLE + " FROM " 
+            					+ BOOKTABLE + " WHERE " + ID + " = " + " '" + bookID + "' ";
             PreparedStatement searchBookStmt = conn.prepareStatement(searchQuery);
             ResultSet rs = searchBookStmt.executeQuery();
 
             if (rs.next()) {
-                if(rs.getBoolean("available") == (isReturningBook ? false : true)) {
+                if(rs.getBoolean(AVAILABLE) == (isReturningBook ? false : true)) {
                     System.out.println("ready to be returned/loaned");
                     try {
                         if(isReturningBook) {
-                            updateQuery = "UPDATE book SET available = '1' WHERE id =" + " '" + bookID + "' ";
+                            updateQuery = "UPDATE " + BOOKTABLE + " SET " + AVAILABLE + " = '1' WHERE " + ID + " = " + " '" + bookID + "' ";
                         } else {
-                            updateQuery = "UPDATE book SET available = '0' WHERE id =" + " '" + bookID + "' ";
+                            updateQuery = "UPDATE " + BOOKTABLE + " SET " + AVAILABLE + " = '0' WHERE " + ID + " = " + " '" + bookID + "' ";
                         }
                         PreparedStatement updateAvailabilityStmt = conn.prepareStatement(updateQuery);
 
                         int result = updateAvailabilityStmt.executeUpdate();
-
+                        
                         rs.close();
                         updateAvailabilityStmt.close();
                         connectionPool.closeConnection(conn);
@@ -242,8 +218,12 @@ public class QueryManager {
     	// bad request
     	return -2;
     }
-
-    public Boolean deleteBook(int id) {
+    /**
+     * 
+     * @param id
+     * @return 1: success; -1: query fail
+     */
+    public int deleteBook(int id) {
     	
     	if(bookExist(id)) {
     		try {
@@ -254,61 +234,69 @@ public class QueryManager {
 		    	deleteBookStmt.executeUpdate();
 		    	deleteBookStmt.close();
 		    	connectionPool.closeConnection(conn);
-		    	return true;
+		    	return 1;
 		    	
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-    		return false;
+    		return -1;
     	}
     	else
-    		return false;
+    		System.out.println(Integer.toString(id) + " book doesn't exist...");
+    		return -1;
     }
     
+    /**
+     * 
+     * @param user
+     * @return 1: correct username and password, has not logged in yet
+     * @return -1: user has logged in
+     * @return -2: incorrect username/password or query fail
+     */
     public int loginUser(ConcurrentHashMap<String, Object> user) {
     	String usr = (String) user.get("Username");
 		String pwd = (String) user.get("Password");
 		
-		// if user has already logged in
-    	if(validateUser(usr)) {
-    		return -1;
-    	}
-    	else {
-    		try {
-				Connection conn = connectionPool.getConnection();
-				
-				String checkUserQuery = "SELECT 1 FROM " + USERTABLE  + " WHERE "
-										+  USERNAME + "=" + " ? " + "AND " + PASSWORD + "=" + " ? ";
-				PreparedStatement stmt = conn.prepareStatement(checkUserQuery);
-				stmt.setString(1, usr);
-				stmt.setString(2, pwd);
-				ResultSet rs = stmt.executeQuery();
-				
-				int result;
-				// correct username and password
-				if(rs.next()) {
-					result = 1; 
-					
-				}
-				// incorrect username and password
-				else {
-					result = -2;
-				}
-				rs.close();
-				stmt.close();
-				connectionPool.closeConnection(conn);
-				return result;
-				
-			} catch (SQLException e) {
-				e.printStackTrace();
+
+		try {
+			Connection conn = connectionPool.getConnection();
+			
+			String checkUserQuery = "SELECT 1 FROM " + USERTABLE  + " WHERE "
+									+  USERNAME + "=" + " ? " + "AND " + PASSWORD + "=" + " ? ";
+			PreparedStatement stmt = conn.prepareStatement(checkUserQuery);
+			stmt.setString(1, usr);
+			stmt.setString(2, pwd);
+			ResultSet rs = stmt.executeQuery();
+			
+			int result;
+			// correct username and password
+			if(rs.next()) {
+				System.out.println("Correct username and password");
+				if(TokenManager.getInstance().validateUser(usr)) {
+		    		result = -1;
+		    	}
+				else{ result = 1; } 
 			}
-    		return -2;
-    	}	
-    }
+			// incorrect username and password
+			else {
+				System.out.println("Incorrect username and password");
+				result = -2;
+			}
+			rs.close();
+			stmt.close();
+			connectionPool.closeConnection(conn);
+			return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return -2;
+    }	
     /**
      * This method checks if the book exists in the database using book id
      * @param int bookID
-     * @return true if book already exists; false if no book exists or unsuccessful query
+     * @return true: book exists
+     * @return false: book does not exist or query fail
      */
     private Boolean bookExist(int bookID) {
     	try {
@@ -336,7 +324,8 @@ public class QueryManager {
     /**
      * This method checks if the book exists in the database using full book data
      * @param ConcurrentHashMap<String, Object> book
-     * @return true if book already exists; false if no book exists or unsuccessful query
+     * @return true: book exists
+     * @return false: book does not exist or query fail
      */
     private Boolean bookExist(ConcurrentHashMap<String, Object> book) {
     	try {
@@ -367,5 +356,43 @@ public class QueryManager {
     		e.printStackTrace();
     	}
     	return false;
+    }
+    
+    
+    
+    /**
+     * This function checks the status of a book by its ID
+     * @param bookID
+     * @return 1 if book exist and available; 0 if book exist but unavailable; -1 if book doesn't exist; -2 if query fail
+     */
+    public int bookStatus(int bookID) {
+    	int status;
+    	try {
+    		Connection conn = connectionPool.getConnection();
+    		String findBookQuery =
+				"SELECT * FROM " + BOOKTABLE  + " WHERE "+  ID + "=?" ;
+    		PreparedStatement findBookStmt = conn.prepareStatement(findBookQuery);
+    		findBookStmt.setInt (1, bookID);
+    		findBookStmt.execute();
+    		ResultSet rs = findBookStmt.getResultSet();
+    		// book exist
+    		if(rs.next()) {
+    			status = (rs.getBoolean(AVAILABLE)==true) ? 1 : 0; 
+    		}
+    		// book doesn't exist at all
+    		else {
+    			status = -1;
+    		}
+    		rs.close();
+    		findBookStmt.close();
+    		connectionPool.closeConnection(conn);
+    		
+    		return status;
+    		
+    	} catch(SQLException e){
+    		e.printStackTrace();
+    	}
+    	// query failed
+    	return -2;
     }
 }

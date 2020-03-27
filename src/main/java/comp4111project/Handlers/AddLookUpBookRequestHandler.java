@@ -1,6 +1,7 @@
 package comp4111project.Handlers;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -14,7 +15,6 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.MethodNotSupportedException;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import comp4111project.BookManagementServer;
 import comp4111project.QueryManager;
+import comp4111project.TokenManager;
 import comp4111project.Model.Book;
 
 public class AddLookUpBookRequestHandler implements HttpRequestHandler {
@@ -35,10 +36,8 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 		System.out.println("Adding or Looking Up a Book");
 		System.out.println(request.getRequestLine().getMethod());
 		
-		//TODO: validate token
-		String url = request.getRequestLine().getUri();
-		String token = url.substring(url.indexOf("token=")+6);
-		if(!QueryManager.getInstance().validateToken(token)) {
+		// validate token
+		if(!TokenManager.getInstance().validateTokenFromURI(request.getRequestLine().getUri())) {
 			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 			return;
 		}
@@ -54,7 +53,24 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 					ObjectMapper mapper = new ObjectMapper();
 					ConcurrentHashMap<String, Object> newBook = mapper.readValue(bookContent, ConcurrentHashMap.class);
 					
-					addBook(response, QueryManager.getInstance().addBook(newBook), token);
+					try {
+						// get token
+						URI uri = new URI(request.getRequestLine().getUri());
+						ConcurrentHashMap<String, String> query_pairs = new ConcurrentHashMap<String, String>();
+				        String query = uri.getQuery();
+				        String[] pairs = query.split("&");
+				        
+				        for (String pair : pairs) {
+				            int idx = pair.indexOf("=");
+				            query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+				        }
+				        String token = query_pairs.get("token");
+				        
+				        addBook(response, QueryManager.getInstance().addBook(newBook), token);
+					} catch (URISyntaxException | UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
+					
 				}
 				
 				break;
@@ -75,7 +91,7 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 		                System.out.println(entry.getKey() + "/" + entry.getValue());
 		            }
 
-		            Vector<Book> foundBooks = new Vector(QueryManager.getInstance().getBooks(query_pairs));
+		            Vector<Book> foundBooks = new Vector<Book>(QueryManager.getInstance().getBooks(query_pairs));
 
 		            if (foundBooks.isEmpty()) {
 		                response.setStatusCode(HttpStatus.SC_NO_CONTENT);
@@ -115,6 +131,9 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 	
 	private void addBook(HttpResponse response, int newBookID, String token) {
 		if(newBookID == -1) {
+			// TODO: Duplicate record: /books/1
+			// need to return the duplicate book id in QueryManager
+			response.addHeader("Duplicate record:", "/books/");
             response.setStatusCode(HttpStatus.SC_CONFLICT);
 		}
 		else if(newBookID == -2) {

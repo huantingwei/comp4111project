@@ -1,50 +1,34 @@
 package comp4111project.Handlers;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.SecureRandom;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.http.Consts;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.MethodNotSupportedException;
-import org.apache.http.RequestLine;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.util.EntityUtils;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import comp4111project.BookManagementServer;
 import comp4111project.QueryManager;
+import comp4111project.TokenManager;
 
 public class LoginRequestHandler implements HttpRequestHandler {
 
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-
+		
+		System.out.println("Loggin request");
+		
 		// parse the request body to Map<String, String> inputData
 		if (request instanceof HttpEntityEnclosingRequest) {
 			HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
@@ -54,30 +38,31 @@ public class LoginRequestHandler implements HttpRequestHandler {
 			
 			int successLogin = QueryManager.getInstance().loginUser(user);
 			switch (successLogin) {
-			case 1:
+			case(1):
 				response.setStatusCode(HttpStatus.SC_OK);
 				String username = (String) user.get("Username");
-            	String newToken = generateNewToken(username);
-            	String rsp = "{ \"Token\" : \"" + newToken + "\" }";
-            	response.setEntity(
-                        new StringEntity(rsp,
-                                ContentType.APPLICATION_JSON));
-            	QueryManager.getInstance().addUserAndToken(username, newToken);
+				String newToken = TokenManager.getInstance().generateNewToken(username);
             	
-			case -1:
+				ObjectNode responseObject = new ObjectMapper().createObjectNode();
+                responseObject.put("Token", newToken);
+                response.setEntity(
+                        new StringEntity(responseObject.toString(),
+                                ContentType.APPLICATION_JSON));
+
+            	TokenManager.getInstance().addUserAndToken(username, newToken);
+            	break;
+			case(-1):
 				response.setStatusCode(HttpStatus.SC_CONFLICT);
-			case -2:
+				break;
+			case(-2):
 				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				break;
+			default:
+				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				break;
 			}
 				
 		}
 	}
 
-	private String generateNewToken(String usr) {
-		// assume no duplicate username
-		Base64.Encoder base64Encoder = Base64.getUrlEncoder();
-		String newToken = base64Encoder.encodeToString(usr.getBytes());
-
-    	return newToken;
-	}
 }

@@ -3,19 +3,13 @@ package comp4111project.Handlers;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.JSONPObject;
-
-import comp4111project.BookManagementServer;
 
 import comp4111project.QueryManager;
+import comp4111project.TokenManager;
+
 import org.apache.http.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -28,10 +22,13 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 	
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-		System.out.println("Managing Book");
-		System.out.println(request.getRequestLine().getMethod());
+		System.out.println("Loan, return, delete book");
 
-		// TODO: validate token
+		// validate token
+		if(!TokenManager.getInstance().validateTokenFromURI(request.getRequestLine().getUri())) {
+			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			return;
+		}
         
 		switch (request.getRequestLine().getMethod()) {
 			case("PUT"):
@@ -43,8 +40,12 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 
 					String fullPath = request.getRequestLine().getUri();
 					String[] paths = fullPath.split("/");
-					String bookID = paths[paths.length - 1];
-
+					
+					// incorrect, not considering ?token= query
+					//String bookID = paths[paths.length - 1];
+					
+					String bookID = paths[paths.length-1].split("\\?")[0];
+					
 					loanOrReturnBook(response, QueryManager.getInstance().returnAndLoanBook(bookID, isReturningBook.get("Available")));
 				}
 				break;
@@ -55,7 +56,6 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 					String path = uri.getPath();
 					String[] pairs = path.split("/");
 					Integer bookID = Integer.parseInt(pairs[pairs.length-1]);
-					
 					deleteBook(response, QueryManager.getInstance().deleteBook(bookID));
 					
 				} catch (URISyntaxException e) {
@@ -74,14 +74,20 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 		}
 	}
 	
-	private void deleteBook(HttpResponse response, Boolean result) {
-		if(result) {
+	private void deleteBook(HttpResponse response, int result) {
+		switch(result) {
+		case(1):
 			response.setStatusCode(HttpStatus.SC_OK);
+			break;
+		case(-1):
+			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "No book record");
+
+			break;
+		default:
+			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			break;
 		}
-		else {
-			response = new BasicHttpResponse(HttpVersion.HTTP_1_1,
-				    HttpStatus.SC_BAD_REQUEST, "No book record");
-		}
+
 	}
 	
 	public void loanOrReturnBook(HttpResponse response, int result) {
@@ -94,11 +100,7 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 				);
 				break;
 			case(1):
-				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-				response.setEntity(
-						new StringEntity("No Book Record Found",
-								ContentType.TEXT_PLAIN)
-				);
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "No book record");
 				break;
 			case(2):
 				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);

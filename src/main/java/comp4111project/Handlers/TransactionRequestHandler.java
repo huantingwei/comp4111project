@@ -1,12 +1,6 @@
 package comp4111project.Handlers;
 
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Savepoint;
-import java.sql.Statement;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.http.Consts;
@@ -22,13 +16,11 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.util.EntityUtils;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import comp4111project.DBConnection;
-import comp4111project.QueryManager;
-import comp4111project.Model.TransactionManager;
+import comp4111project.TokenManager;
+import comp4111project.TransactionManager;
 
 public class TransactionRequestHandler implements HttpRequestHandler {
 
@@ -42,20 +34,27 @@ public class TransactionRequestHandler implements HttpRequestHandler {
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context)
 			throws HttpException, IOException {
-
-		//TODO: what if the token contains "token="?	
-//		String url = request.getRequestLine().getUri();
-//		String token = URLDecoder.decode(url.substring(url.indexOf("token=")+6), "UTF-8");
-//		if(!QueryManager.getInstance().validateToken(token)) {
-//			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-//			return;
-//		}
-		// parse transaction request body		
+		
+		// validate token
+		if(!TokenManager.getInstance().validateTokenFromURI(request.getRequestLine().getUri())) {
+			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			return;
+		}
+		// parse transaction request body	
 		if (request instanceof HttpEntityEnclosingRequest) {
+			System.out.println("This request has request body");
 			HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+
 			String content = EntityUtils.toString(entity, Consts.UTF_8);
-			ObjectMapper mapper = new ObjectMapper();
-		    txData = mapper.readValue(content, ConcurrentHashMap.class);		
+
+			if(!content.equals("")) {
+				ObjectMapper mapper = new ObjectMapper();
+				txData = mapper.readValue(content, ConcurrentHashMap.class);
+			}
+			else{
+				System.out.println("No request body actually");
+				txData = null;
+			}
 		}
 		else {
 			txData = null;
