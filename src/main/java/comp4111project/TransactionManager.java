@@ -1,6 +1,9 @@
-package comp4111project.Model;
+package comp4111project;
 
 import java.util.Vector;
+
+import comp4111project.Model.Action;
+import comp4111project.Model.Transaction;
 
 
 public class TransactionManager {
