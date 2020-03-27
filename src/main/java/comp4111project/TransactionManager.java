@@ -1,6 +1,6 @@
 package comp4111project;
 
-import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import comp4111project.Model.Action;
 import comp4111project.Model.Transaction;
@@ -14,12 +14,12 @@ public class TransactionManager {
 	
 	private final int TX_LIMIT = 100;
 	
-	Vector<Transaction> transactions;
+	ConcurrentHashMap<Integer, Transaction> transactions;
 	int txID;
 	
 	private TransactionManager() {
-		transactions = new Vector<Transaction>();
-		txID = 0;
+		transactions = new ConcurrentHashMap<Integer, Transaction>();
+		txID = 1;
 	}
     private static class BillPushSingleton {
         private static final TransactionManager INSTANCE = new TransactionManager();
@@ -35,8 +35,8 @@ public class TransactionManager {
     		return -1;
     	}
     	// TODO: what happen if txID overflow?
-    	transactions.add(new Transaction(txID++));
-    	return txID;
+    	transactions.put(txID++, new Transaction(txID));
+    	return txID - 1;
     }
     
     /**
@@ -48,7 +48,8 @@ public class TransactionManager {
      */
     public int addActionToTx(int id, String actionName, int bookID) {
     	// validate action type
-    	if(actionName != RETURN || actionName != LOAN) {
+    	if(!actionName.equals(RETURN) && !actionName.equals(LOAN)) {
+    		System.out.println("wrong action name: " + actionName);
     		return -1;
     	}
     	else {
@@ -63,7 +64,14 @@ public class TransactionManager {
 	 * @return -1: unsuccessful commit
 	 */
     public int commitTx(int id) {
-    	return transactions.get(id).executeAction();
+    	Transaction tx;
+    	try {
+    		tx = transactions.get(id);
+    		tx.executeAction();
+    		return 1;
+    	} catch (Exception e) {
+    		return -1;
+    	}
     }
     /**
      * 
