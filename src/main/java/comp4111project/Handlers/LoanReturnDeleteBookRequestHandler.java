@@ -42,8 +42,8 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 					ConcurrentHashMap<String, Boolean> isReturningBook = mapper.readValue(testContent, ConcurrentHashMap.class);
 
 					String fullPath = request.getRequestLine().getUri();
-					String[] paths = fullPath.split("/");
-					String bookID = paths[paths.length - 1];
+					String[] paths = fullPath.split("/");					
+					String bookID = paths[paths.length-1].split("\\?")[0];
 
 					loanOrReturnBook(response, QueryManager.getInstance().returnAndLoanBook(bookID, isReturningBook.get("Available")));
 				}
