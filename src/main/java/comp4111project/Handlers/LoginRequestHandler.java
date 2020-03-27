@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.http.Consts;
 import org.apache.http.Header;
@@ -52,24 +55,34 @@ public class LoginRequestHandler implements HttpRequestHandler {
 			ObjectMapper mapper = new ObjectMapper();
 			ConcurrentHashMap<String, Object> user = mapper.readValue(userContent, ConcurrentHashMap.class);
 			
-			int successLogin = QueryManager.getInstance().loginUser(user);
-			switch (successLogin) {
-			case 1:
-				response.setStatusCode(HttpStatus.SC_OK);
-				String username = (String) user.get("Username");
-            	String newToken = generateNewToken(username);
-            	String rsp = "{ \"Token\" : \"" + newToken + "\" }";
-            	response.setEntity(
-                        new StringEntity(rsp,
-                                ContentType.APPLICATION_JSON));
-            	QueryManager.getInstance().addUserAndToken(username, newToken);
-            	
-			case -1:
-				response.setStatusCode(HttpStatus.SC_CONFLICT);
-			case -2:
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			Future<Integer> sucessLoginFuture = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().loginUser(user));
+			try {
+				switch (sucessLoginFuture.get()) {
+					case 1:
+						response.setStatusCode(HttpStatus.SC_OK);
+						String username = (String) user.get("Username");
+						String newToken = generateNewToken(username);
+						String rsp = "{ \"Token\" : \"" + newToken + "\" }";
+						response.setEntity(
+								new StringEntity(rsp,
+										ContentType.APPLICATION_JSON));
+						Executors.newSingleThreadExecutor().execute(() -> QueryManager.getInstance().addUserAndToken(username, newToken));
+						break;
+					case -1:
+						response.setStatusCode(HttpStatus.SC_CONFLICT);
+						break;
+					case -2:
+						response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+						break;
+					default:
+						response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+						break;
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
 			}
-				
 		}
 	}
 

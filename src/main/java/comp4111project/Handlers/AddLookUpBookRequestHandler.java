@@ -6,15 +6,11 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.MethodNotSupportedException;
+import org.apache.http.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
@@ -38,23 +34,41 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 		//TODO: validate token
 		String url = request.getRequestLine().getUri();
 		String token = url.substring(url.indexOf("token=")+6);
-		if(!QueryManager.getInstance().validateToken(token)) {
-			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-			return;
+		Future<Boolean> validateTokenFuture = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().validateToken(token));
+		try {
+			if(!validateTokenFuture.get()) {
+				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				return;
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
 		}
+//		if(!QueryManager.getInstance().validateToken(token)) {
+//			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+//			return;
+//		}
 		
 		switch (request.getRequestLine().getMethod()) {
 		
 			// Add
 			case("POST"):
-				
 				if(request instanceof HttpEntityEnclosingRequest) {
 					HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 					String bookContent = EntityUtils.toString(entity, Consts.UTF_8);
 					ObjectMapper mapper = new ObjectMapper();
 					ConcurrentHashMap<String, Object> newBook = mapper.readValue(bookContent, ConcurrentHashMap.class);
 					
-					addBook(response, QueryManager.getInstance().addBook(newBook), token);
+					Future<HttpResponse> addFuture = Executors.newSingleThreadExecutor().submit(() -> addBook(response, QueryManager.getInstance().addBook(newBook), token));
+					try {
+						response.setStatusCode(addFuture.get().getStatusLine().getStatusCode());
+						response.setEntity(addFuture.get().getEntity());
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					} catch (ExecutionException e) {
+						e.printStackTrace();
+					}
 				}
 				
 				break;
@@ -75,45 +89,46 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 		                System.out.println(entry.getKey() + "/" + entry.getValue());
 		            }
 
-		            Vector<Book> foundBooks = new Vector(QueryManager.getInstance().getBooks(query_pairs));
+					try {
+						Future<Vector> future = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().getBooks(query_pairs));
+						try {
+							Vector foundBooks = future.get();
+							if (foundBooks.isEmpty()) {
+								response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_NO_CONTENT, "No Content");
+							} else {
+								ObjectMapper mapper = new ObjectMapper();
+								ObjectNode responseObject = mapper.createObjectNode();
+								responseObject.put("FoundBooks", foundBooks.size());
+								responseObject.putPOJO("Results", foundBooks);
 
-		            if (foundBooks.isEmpty()) {
-		                response.setStatusCode(HttpStatus.SC_NO_CONTENT);
-		                response.setEntity(
-		                        new StringEntity("204 No Content",
-		                                ContentType.TEXT_PLAIN)
-		                );
-		            } else {
-		                ObjectMapper mapper = new ObjectMapper();
-		                ObjectNode responseObject = mapper.createObjectNode();
-		                responseObject.put("FoundBooks", foundBooks.size());
-		                responseObject.putPOJO("Results", foundBooks);
+								response.setStatusCode(HttpStatus.SC_OK);
+								response.setEntity(
+										new StringEntity(responseObject.toString(),
+												ContentType.TEXT_PLAIN)
+								);
+							}
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						} catch (ExecutionException e) {
+							e.printStackTrace();
+						}
 
-		                response.setStatusCode(HttpStatus.SC_OK);
-		                response.setEntity(
-		                        new StringEntity(responseObject.toString(),
-		                                ContentType.TEXT_PLAIN)
-		                );
-		            }
+					} catch(Exception e) {
+
+					}
 		        } catch (URISyntaxException e) {
 		            e.printStackTrace();
 		        }
-			
+
 				break;
 			
 			default:
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				response.setEntity(
-						new StringEntity("Bad Request",
-								ContentType.TEXT_PLAIN)
-				);
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 				break;
 		}
-
-		
 	}
 	
-	private void addBook(HttpResponse response, int newBookID, String token) {
+	private HttpResponse addBook(HttpResponse response, int newBookID, String token) {
 		if(newBookID == -1) {
             response.setStatusCode(HttpStatus.SC_CONFLICT);
 		}
@@ -128,6 +143,7 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
                     		+ BookManagementServer.ROOT_DIRECTORY + "/books/" + newBookID + "?token=" + token,
                             ContentType.TEXT_PLAIN));
 		}
+		return response;
 	}
 
 
