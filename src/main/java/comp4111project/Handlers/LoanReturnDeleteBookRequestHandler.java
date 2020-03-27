@@ -42,11 +42,13 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 					ConcurrentHashMap<String, Boolean> isReturningBook = mapper.readValue(testContent, ConcurrentHashMap.class);
 
 					String fullPath = request.getRequestLine().getUri();
-					String[] paths = fullPath.split("/");					
+					String[] paths = fullPath.split("/");
+					// get book id
 					String bookID = paths[paths.length-1].split("\\?")[0];
 
 					Future<HttpResponse> returnLoanFuture = Executors.newSingleThreadExecutor().submit(() ->
 							loanOrReturnBook(response, QueryManager.getInstance().returnAndLoanBook(bookID, isReturningBook.get("Available"))));
+					
 					try {
 						response.setStatusLine(returnLoanFuture.get().getStatusLine());
 					} catch (InterruptedException e) {
