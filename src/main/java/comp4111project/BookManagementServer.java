@@ -2,11 +2,6 @@ package comp4111project;
 
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
@@ -21,11 +16,6 @@ import org.apache.http.protocol.UriHttpRequestHandlerMapper;
 import org.apache.http.ssl.SSLContexts;
 
 public class BookManagementServer {
-
-//	// database connection configuration file (in root folder)
-//	final static String DB_CONFIG_FILE = "connection.prop";
-//    // global database connection pool
-//    public static DBConnection DB;
 	
 	public static String HOST = "localhost";
 	public static int PORT = 8081;
@@ -46,7 +36,6 @@ public class BookManagementServer {
         }
 
     }	
-
     
 	public static void main(String[] args) throws Exception {
 		
@@ -63,6 +52,10 @@ public class BookManagementServer {
                     .build();
         }
         
+//        DBConnection conn = new DBConnection("connection.prop");
+//        conn.initUser("user", Arrays.asList("userid", "Username", "Password"), 100);
+//        System.out.println("Finished inserting 100 users");
+        
         /**
          * Map the RequestHandlers to each urls
          */
@@ -71,11 +64,13 @@ public class BookManagementServer {
 		LogoutRequestHandler logoutRequestHandler = new LogoutRequestHandler();
 		LoanReturnDeleteBookRequestHandler manageBookRequestHandler = new LoanReturnDeleteBookRequestHandler();
         AddLookUpBookRequestHandler addLookUpBookRequestHandler = new AddLookUpBookRequestHandler();
-		
+		TransactionRequestHandler transactionRequestHandler = new TransactionRequestHandler();
+        
 		handlerMapper.register(ROOT_DIRECTORY+ "/login", loginRequestHandler);
 		handlerMapper.register(ROOT_DIRECTORY + "/logout", logoutRequestHandler);
         handlerMapper.register(ROOT_DIRECTORY + "/books", addLookUpBookRequestHandler);
 		handlerMapper.register(ROOT_DIRECTORY + "/books/*", manageBookRequestHandler);
+		handlerMapper.register(ROOT_DIRECTORY + "/transaction", transactionRequestHandler);
 		
 		/**
 		 * Set up the server
@@ -97,6 +92,7 @@ public class BookManagementServer {
         server.start();
         System.out.println("Server has started with port " + server.getLocalPort());
         server.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+        
         
         // not sure what are these yet! 
         Runtime.getRuntime().addShutdownHook(new Thread() {

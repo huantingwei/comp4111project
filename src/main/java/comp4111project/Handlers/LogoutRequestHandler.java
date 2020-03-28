@@ -1,6 +1,7 @@
 package comp4111project.Handlers;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -9,39 +10,38 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
+
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.MethodNotSupportedException;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 
-import comp4111project.BookManagementServer;
-import comp4111project.QueryManager;
+import comp4111project.TokenManager;
 
 public class LogoutRequestHandler implements HttpRequestHandler {
 
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
 
-		// TODO: better way to get token?
-		String url = request.getRequestLine().getUri();
-		String token = url.substring(url.indexOf("token=")+6);
+		System.out.println("Logout request");
 		
-		// user has logged in (valid token)
-		String usr = QueryManager.getInstance().getUserFromToken(token);
-        if(usr!=null) {
-			Executors.newSingleThreadExecutor().execute(() -> QueryManager.getInstance().removeUserAndToken(token));
-        	response.setStatusCode(HttpStatus.SC_OK);
-        }
-        // user has not logged in (invalid token)
-        else {
-        	response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-        }
+		String token = TokenManager.getInstance().getTokenFromURI(request.getRequestLine().getUri());
+		Future<Boolean> loggedin = Executors.newSingleThreadExecutor().submit(() -> TokenManager.getInstance().validateToken(token));
+    try {
+			if(loggedin.get()) {
+        Executors.newSingleThreadExecutor().execute(() -> TokenManager.getInstance().removeUserAndToken(token));
+        response.setStatusCode(HttpStatus.SC_OK);
+			}
+      else{
+        response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+      }
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
+
 	}
 }

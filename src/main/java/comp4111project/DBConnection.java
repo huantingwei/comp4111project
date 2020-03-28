@@ -47,11 +47,10 @@ public class DBConnection implements DBSource {
         DB_NAME = props.getProperty("comp4111.project.dbname");
         USER_TB_NAME = props.getProperty("comp4111project.usertbname");
         BOOK_TB_NAME = props.getProperty("comp4111project.booktbname");
-        // TODO: put into connection.prop
-        USER_TB_COL = new ArrayList<String>(Arrays.asList("userid", "Username", "Password"));
-        
+        USER_TB_COL = Arrays.asList(props.getProperty("comp4111project.usertbcol").split("#"));
+        BOOK_TB_COL = Arrays.asList(props.getProperty("comp4111project.booktbcol").split("#"));
         INIT_NUM_USER = Integer.parseInt(props.getProperty("comp4111project.initnumuser"));
-//        configureDatabase(DB_NAME, USER_TB_NAME, USER_TB_COL, BOOK_TB_NAME, INIT_NUM_USER);
+        
     }
    
     
@@ -80,7 +79,7 @@ public class DBConnection implements DBSource {
     }
         
     private void configureDatabase(String dbName, String usrTbName, List<String> usrTbCol, String bkTbName, int initNumUser) throws SQLException {
-    	//createDatabase(dbName);
+    	createDatabase(dbName);
     	createUserTable(usrTbName, usrTbCol);
     	createBookTable(bkTbName);
     	initUser(usrTbName, usrTbCol, initNumUser);
@@ -92,11 +91,7 @@ public class DBConnection implements DBSource {
      * @throws SQLException
      */
     private void createDatabase(String dbName) throws SQLException {
-    	// TODO: needs the schema(database?) name to get connection
-    	// how to create database?
-    	// currently using the premade database in local server
 	    Connection conn = getConnection();
-    	
     	String query = "CREATE DATABASE " + dbName + ";";
     	PreparedStatement stmt = conn.prepareStatement(query);
     	stmt.executeUpdate();
@@ -153,7 +148,7 @@ public class DBConnection implements DBSource {
      * @param usrTbCol
      * @param numOfUser
      */
-    private void initUser(String usrTbName, List<String> usrTbCol, int numOfUser) {
+    public void initUser(String usrTbName, List<String> usrTbCol, int numOfUser) {
     	
     	try {
     		Connection conn = getConnection();
@@ -170,7 +165,7 @@ public class DBConnection implements DBSource {
     		for(int i=1; i<=numOfUser; i++) {
     			// username/password = user/passwd + 00..0 + user number
     			String usr = "user";
-    			String pwd = "passwd";
+    			String pwd = "pass";
 
     			int zeros = prefixZero - (int) Math.log10(i);
     			for(int z=0; z<zeros; z++) {
@@ -192,7 +187,7 @@ public class DBConnection implements DBSource {
     		}
     		stmt.executeBatch();
     		closeConnection(conn);
-    		System.out.println("Finished inserting 10000 users.");
+    		System.out.println("Finished inserting " + Integer.toString(numOfUser) + ".");
     	} catch (Exception e){
     	      System.err.println("Got an exception!");
     	      System.err.println(e.getMessage());

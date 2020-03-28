@@ -11,11 +11,10 @@ import java.sql.Statement;
 import java.util.concurrent.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.JSONPObject;
-
-import comp4111project.BookManagementServer;
 
 import comp4111project.QueryManager;
+import comp4111project.TokenManager;
+
 import org.apache.http.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -28,10 +27,13 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 	
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-		System.out.println("Managing Book");
-		System.out.println(request.getRequestLine().getMethod());
+		System.out.println("Loan, return, delete book");
 
-		// TODO: validate token
+		// validate token
+		if(!TokenManager.getInstance().validateTokenFromURI(request.getRequestLine().getUri())) {
+			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			return;
+		}
         
 		switch (request.getRequestLine().getMethod()) {
 			case("PUT"):
@@ -56,6 +58,7 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 					} catch (ExecutionException e) {
 						e.printStackTrace();
 					}
+
 				}
 				break;
 			case("DELETE"):
@@ -88,6 +91,7 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 		}
 	}
 	
+
 	private HttpResponse deleteBook(HttpResponse response, Boolean result) {
 		if(result) {
 			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
