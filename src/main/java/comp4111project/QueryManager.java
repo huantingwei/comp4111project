@@ -9,7 +9,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -114,7 +113,7 @@ public class QueryManager {
         String updateQuery;
         try {
             Connection conn = connectionPool.getConnection();
-            String searchQuery = "SELECT " + AVAILABLE + " FROM " 
+            String searchQuery = "SELECT * FROM " 
             					+ BOOKTABLE + " WHERE " + ID + " = " + " '" + bookID + "' ";
             PreparedStatement searchBookStmt = conn.prepareStatement(searchQuery);
             ResultSet rs = searchBookStmt.executeQuery();
@@ -209,6 +208,9 @@ public class QueryManager {
 	                insertStmt.close();
 	                connectionPool.closeConnection(conn);
 	                return newID;
+		        } finally {
+	                insertStmt.close();
+	                connectionPool.closeConnection(conn);
 		        }
 			}
 
@@ -219,7 +221,7 @@ public class QueryManager {
     	return -2;
     }
     /**
-     * 
+     * This function delete the book record with specified book id
      * @param id
      * @return 1: success; -1: query fail
      */
@@ -247,7 +249,7 @@ public class QueryManager {
     }
     
     /**
-     * 
+     * This function checks if the user exist and the username and password is correct
      * @param user
      * @return 1: correct username and password, has not logged in yet
      * @return -1: user has logged in
@@ -257,7 +259,6 @@ public class QueryManager {
     	String usr = (String) user.get("Username");
 		String pwd = (String) user.get("Password");
 		
-
 		try {
 			Connection conn = connectionPool.getConnection();
 			
@@ -361,11 +362,11 @@ public class QueryManager {
     
     
     /**
-     * This function checks the status of a book by its ID
+     * This function checks the availability of a book by its ID
      * @param bookID
      * @return 1 if book exist and available; 0 if book exist but unavailable; -1 if book doesn't exist; -2 if query fail
      */
-    public int bookStatus(int bookID) {
+    public int bookAvailability(int bookID) {
     	int status;
     	try {
     		Connection conn = connectionPool.getConnection();

@@ -9,4 +9,7 @@ build
 .AppleDouble
 .LSOverride
 .idea
-connection2.prop
+connection.prop
+
+## Ignore SQL scripts
+.sql

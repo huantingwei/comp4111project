@@ -79,7 +79,7 @@ public class DBConnection implements DBSource {
     }
         
     private void configureDatabase(String dbName, String usrTbName, List<String> usrTbCol, String bkTbName, int initNumUser) throws SQLException {
-    	//createDatabase(dbName);
+    	createDatabase(dbName);
     	createUserTable(usrTbName, usrTbCol);
     	createBookTable(bkTbName);
     	initUser(usrTbName, usrTbCol, initNumUser);
