@@ -35,7 +35,8 @@ public class TransactionManager {
     		return -1;
     	}
     	// TODO: what happen if txID overflow?
-    	transactions.put(txID++, new Transaction(txID));
+    	transactions.put(txID, new Transaction(txID));
+    	txID++;
     	return txID - 1;
     }
     
@@ -64,12 +65,13 @@ public class TransactionManager {
 	 * @return -1: unsuccessful commit
 	 */
     public int commitTx(int id) {
+    	System.out.println("commiting transaction: " + Integer.toString(id));
     	Transaction tx;
     	try {
     		tx = transactions.get(id);
-    		tx.executeAction();
-    		return 1;
+    		return tx.executeAction();
     	} catch (Exception e) {
+    		System.out.println("Exception occurs during committing transaction...");
     		return -1;
     	}
     }
@@ -84,6 +86,7 @@ public class TransactionManager {
     		transactions.remove(id);
     		return 1;
     	} catch (Exception e){
+    		System.out.println("Exception occurs during canceling transaction...");
     		return -1;
     	}
     }

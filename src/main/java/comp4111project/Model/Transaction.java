@@ -27,7 +27,7 @@ public class Transaction {
 		int bookAvailable;
 		int newStatus = -1;
 		
-		bookAvailable = modifiedBooks.containsKey(id) ? modifiedBooks.get(id) : QueryManager.getInstance().bookAvailable(id);
+		bookAvailable = modifiedBooks.containsKey(id) ? modifiedBooks.get(id) : QueryManager.getInstance().bookAvailability(id);
 		
 		if((bookAvailable == 1 && name.equals("loan"))) {
 			newStatus = 0;
@@ -39,6 +39,7 @@ public class Transaction {
 		if(newStatus == 0 || newStatus == 1) {
 			if(modifiedBooks.containsKey(id)) { modifiedBooks.replace(id, newStatus); }
 			else { modifiedBooks.put(id, newStatus); }
+			actions.add(action);
 			return 1;
 		}
 		else {
@@ -54,9 +55,8 @@ public class Transaction {
 	public int executeAction() {
 		int result;
 		for(Action a : actions) {
-			Boolean isReturn = (a.getName() == "return") ? true : false; 
+			Boolean isReturn = (a.getName().equals("return")) ? true : false; 
 			result = QueryManager.getInstance().returnAndLoanBook(Integer.toString(a.getBookID()), isReturn);
-			
 			if(result != 0) return -1;
 		}
 		return 1;

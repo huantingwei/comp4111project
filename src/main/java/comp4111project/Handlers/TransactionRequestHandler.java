@@ -29,7 +29,7 @@ public class TransactionRequestHandler implements HttpRequestHandler {
 	private final String TX_ACT = "Action";
 	private final String TX_BKID = "Book";
 	
-	ConcurrentHashMap<String, Object> txData; 
+	ConcurrentHashMap<String, Object> txData = null;
 	
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context)
@@ -42,7 +42,6 @@ public class TransactionRequestHandler implements HttpRequestHandler {
 		}
 		// parse transaction request body	
 		if (request instanceof HttpEntityEnclosingRequest) {
-			System.out.println("This request has request body");
 			HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 
 			String content = EntityUtils.toString(entity, Consts.UTF_8);
@@ -51,16 +50,8 @@ public class TransactionRequestHandler implements HttpRequestHandler {
 				ObjectMapper mapper = new ObjectMapper();
 				txData = mapper.readValue(content, ConcurrentHashMap.class);
 			}
-			else{
-				System.out.println("No request body actually");
-				txData = null;
-			}
 		}
-		else {
-			txData = null;
-		}
-		
-		
+				
 		switch(request.getRequestLine().getMethod()) {
 		
 		// request transaction id or
