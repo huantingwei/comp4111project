@@ -2,6 +2,9 @@ package comp4111project.Handlers;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
@@ -35,33 +38,37 @@ public class LoginRequestHandler implements HttpRequestHandler {
 			String userContent = EntityUtils.toString(entity, Consts.UTF_8);
 			ObjectMapper mapper = new ObjectMapper();
 			ConcurrentHashMap<String, Object> user = mapper.readValue(userContent, ConcurrentHashMap.class);
-			
-			int successLogin = QueryManager.getInstance().loginUser(user);
-			switch (successLogin) {
-			case(1):
-				response.setStatusCode(HttpStatus.SC_OK);
-				String username = (String) user.get("Username");
-				String newToken = TokenManager.getInstance().generateNewToken(username);
-            	
-				ObjectNode responseObject = new ObjectMapper().createObjectNode();
+
+			Future<Integer> sucessLoginFuture = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().loginUser(user));
+			try {
+				switch (sucessLoginFuture.get()) {
+					case 1:
+						response.setStatusCode(HttpStatus.SC_OK);
+						String username = (String) user.get("Username");
+						String newToken = TokenManager.getInstance().generateNewToken(username);
+            ObjectNode responseObject = new ObjectMapper().createObjectNode();
                 responseObject.put("Token", newToken);
                 response.setEntity(
                         new StringEntity(responseObject.toString(),
                                 ContentType.APPLICATION_JSON));
-
-            	TokenManager.getInstance().addUserAndToken(username, newToken);
-            	break;
-			case(-1):
-				response.setStatusCode(HttpStatus.SC_CONFLICT);
-				break;
-			case(-2):
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				break;
-			default:
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				break;
+            
+						Executors.newSingleThreadExecutor().execute(() -> QueryManager.getInstance().addUserAndToken(username, newToken));
+						break;
+					case -1:
+						response.setStatusCode(HttpStatus.SC_CONFLICT);
+						break;
+					case -2:
+						response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+						break;
+					default:
+						response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+						break;
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
 			}
-				
 		}
 	}
 

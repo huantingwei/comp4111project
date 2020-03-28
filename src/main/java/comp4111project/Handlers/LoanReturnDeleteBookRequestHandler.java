@@ -3,7 +3,12 @@ package comp4111project.Handlers;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.concurrent.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -39,25 +44,41 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 					ConcurrentHashMap<String, Boolean> isReturningBook = mapper.readValue(testContent, ConcurrentHashMap.class);
 
 					String fullPath = request.getRequestLine().getUri();
-					String[] paths = fullPath.split("/");					
+					String[] paths = fullPath.split("/");
+					// get book id
 					String bookID = paths[paths.length-1].split("\\?")[0];
+
+					Future<HttpResponse> returnLoanFuture = Executors.newSingleThreadExecutor().submit(() ->
+							loanOrReturnBook(response, QueryManager.getInstance().returnAndLoanBook(bookID, isReturningBook.get("Available"))));
 					
-					loanOrReturnBook(response, QueryManager.getInstance().returnAndLoanBook(bookID, isReturningBook.get("Available")));
+					try {
+						response.setStatusLine(returnLoanFuture.get().getStatusLine());
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					} catch (ExecutionException e) {
+						e.printStackTrace();
+					}
+
 				}
 				break;
-
 			case("DELETE"):
 				try {
 					URI uri = new URI(request.getRequestLine().getUri());
 					String path = uri.getPath();
 					String[] pairs = path.split("/");
 					Integer bookID = Integer.parseInt(pairs[pairs.length-1]);
-					deleteBook(response, QueryManager.getInstance().deleteBook(bookID));
-					
+
+					Future<HttpResponse> deleteFuture = Executors.newSingleThreadExecutor().submit(() -> deleteBook(response, QueryManager.getInstance().deleteBook(bookID)));
+					try {
+						response.setStatusLine(deleteFuture.get().getStatusLine());
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					} catch (ExecutionException e) {
+						e.printStackTrace();
+					}
 				} catch (URISyntaxException e) {
 					e.printStackTrace();
 				}
-
 				break;
 				
 			default:
@@ -70,43 +91,31 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 		}
 	}
 	
-	private void deleteBook(HttpResponse response, int result) {
-		switch(result) {
-		case(1):
-			response.setStatusCode(HttpStatus.SC_OK);
-			break;
-		case(-1):
-			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "No book record");
 
-			break;
-		default:
-			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-			break;
+	private HttpResponse deleteBook(HttpResponse response, Boolean result) {
+		if(result) {
+			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
 		}
-
+		else {
+			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "No book record");
+		}
+		return response;
 	}
 	
-	public void loanOrReturnBook(HttpResponse response, int result) {
+	public HttpResponse loanOrReturnBook(HttpResponse response, int result) {
 		switch(result) {
 			case(0):
-				response.setStatusCode(HttpStatus.SC_OK);
-				response.setEntity(
-						new StringEntity("Book Returned/Loaned Successfully",
-								ContentType.TEXT_PLAIN)
-				);
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "Successfully returned/loaned");
 				break;
 			case(1):
 				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "No book record");
 				break;
 			case(2):
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				response.setEntity(
-						new StringEntity("This book has already been returned/loaned",
-								ContentType.TEXT_PLAIN)
-				);
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Already returned/loaned");
 				break;
 			default:
 				break;
 		}
+		return response;
 	}
 }

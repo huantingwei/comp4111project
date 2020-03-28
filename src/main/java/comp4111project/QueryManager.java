@@ -53,7 +53,7 @@ public class QueryManager {
     
     public Vector<Book> getBooks(ConcurrentHashMap<String, String> queryPairs) {
         queryPairs.remove("token");
-        Vector<Book> books = new Vector<Book>();
+        Vector<Book> books = new Vector<>();
         String searchQuery;
         try {
             Connection conn = connectionPool.getConnection();
@@ -66,9 +66,9 @@ public class QueryManager {
                     String value = entry.getValue();
 
                     if(key.equals("author")) {
-                        searchQuery += " " + key + " LIKE" + " '%" + value + "%'" + " AND";
+                        searchQuery += " " + capitalize(key) + " LIKE" + " '%" + value + "%'" + " AND";
                     } else if(key.equals("id") || key.equals("title") || key.equals("publisher") || key.equals("year")) {
-                        searchQuery += " " + key + " =" + " '" + value +"'" + " AND";
+                        searchQuery += " " + capitalize(key) + " =" + " '" + value +"'" + " AND";
                     }
                 }
                 searchQuery = searchQuery.substring(0, searchQuery.length() - 3);
@@ -93,6 +93,7 @@ public class QueryManager {
                 String bookAuthor = rs.getString("author");
                 String publisher = rs.getString("publisher");
                 int year = rs.getInt("year");
+                System.out.println(title);
                 Book foundBook = new Book(Integer.parseInt(bookID), title, bookAuthor, publisher, year);
                 books.add(foundBook);
             }
@@ -106,6 +107,14 @@ public class QueryManager {
         }
 
         return books;
+    }
+
+    private static String capitalize(String str) {
+        if(str == null || str.isEmpty()) {
+            return str;
+        }
+
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
     // Returns an integer depending on the status: 0 - 200 OK 1 - No book record 2 - bad request
