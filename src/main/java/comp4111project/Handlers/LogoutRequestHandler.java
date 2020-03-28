@@ -8,8 +8,9 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-
+import java.util.concurrent.Future;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;

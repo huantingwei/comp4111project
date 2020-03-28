@@ -92,8 +92,8 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 	}
 	
 
-	private HttpResponse deleteBook(HttpResponse response, Boolean result) {
-		if(result) {
+	private HttpResponse deleteBook(HttpResponse response, int result) {
+		if(result == 1) {
 			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
 		}
 		else {

@@ -52,7 +52,7 @@ public class LoginRequestHandler implements HttpRequestHandler {
                         new StringEntity(responseObject.toString(),
                                 ContentType.APPLICATION_JSON));
             
-						Executors.newSingleThreadExecutor().execute(() -> QueryManager.getInstance().addUserAndToken(username, newToken));
+						Executors.newSingleThreadExecutor().execute(() -> TokenManager.getInstance().addUserAndToken(username, newToken));
 						break;
 					case -1:
 						response.setStatusCode(HttpStatus.SC_CONFLICT);

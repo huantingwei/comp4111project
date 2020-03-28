@@ -88,11 +88,11 @@ public class QueryManager {
             ResultSet rs = searchStmt.executeQuery();
 
             while(rs.next()) {
-                String bookID = rs.getString("id");
-                String title = rs.getString("title");
-                String bookAuthor = rs.getString("author");
-                String publisher = rs.getString("publisher");
-                int year = rs.getInt("year");
+                String bookID = rs.getString(ID);
+                String title = rs.getString(TITLE);
+                String bookAuthor = rs.getString(AUTHOR);
+                String publisher = rs.getString(PUBLISHER);
+                int year = rs.getInt(YEAR);
                 System.out.println(title);
                 Book foundBook = new Book(Integer.parseInt(bookID), title, bookAuthor, publisher, year);
                 books.add(foundBook);

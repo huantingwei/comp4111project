@@ -2,6 +2,7 @@ package comp4111project;
 
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
@@ -52,10 +53,11 @@ public class BookManagementServer {
                     .build();
         }
         
+        // for testing...init user in the database
 //        DBConnection conn = new DBConnection("connection.prop");
 //        conn.initUser("user", Arrays.asList("userid", "Username", "Password"), 100);
 //        System.out.println("Finished inserting 100 users");
-        
+//        
         /**
          * Map the RequestHandlers to each urls
          */
