@@ -66,7 +66,7 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 					URI uri = new URI(request.getRequestLine().getUri());
 					String path = uri.getPath();
 					String[] pairs = path.split("/");
-					Integer bookID = Integer.parseInt(pairs[pairs.length-1]);
+					String bookID = pairs[pairs.length-1];
 
 					Future<HttpResponse> deleteFuture = Executors.newSingleThreadExecutor().submit(() -> deleteBook(response, QueryManager.getInstance().deleteBook(bookID)));
 					try {
@@ -105,13 +105,13 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 	public HttpResponse loanOrReturnBook(HttpResponse response, int result) {
 		switch(result) {
 			case(0):
-				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "Successfully returned/loaned");
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
 				break;
 			case(1):
 				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "No book record");
 				break;
 			case(2):
-				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Already returned/loaned");
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 				break;
 			default:
 				break;

@@ -6,14 +6,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import comp4111project.QueryManager;
 
 public class Transaction {
-	private int id;
-	private ConcurrentHashMap<Integer, Integer> modifiedBooks;
+	private long id;
+	private ConcurrentHashMap<Long, Integer> modifiedBooks;
 	private Vector<Action> actions;
 	
-	public Transaction(int id) {
+	public Transaction(long id) {
 		this.id = id;
 		actions = new Vector<Action>();
-		modifiedBooks = new ConcurrentHashMap<Integer, Integer>();
+		modifiedBooks = new ConcurrentHashMap<Long, Integer>();
 	}
 	
 	/**
@@ -22,7 +22,7 @@ public class Transaction {
 	 * @return -1 if invalid action, 1 if valid action
 	 */
 	public int addAction(Action action) {
-		int id = action.getBookID();
+		long id = action.getBookID();
 		String name = action.getName();
 		int bookAvailable;
 		int newStatus = -1;
@@ -56,13 +56,13 @@ public class Transaction {
 		int result;
 		for(Action a : actions) {
 			Boolean isReturn = (a.getName().equals("return")) ? true : false; 
-			result = QueryManager.getInstance().returnAndLoanBook(Integer.toString(a.getBookID()), isReturn);
+			result = QueryManager.getInstance().returnAndLoanBook(Long.toString(a.getBookID()), isReturn);
 			if(result != 0) return -1;
 		}
 		return 1;
 	}
 	
-	public int getID() {
+	public long getID() {
 		return id;
 	}
 	

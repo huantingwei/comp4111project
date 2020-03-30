@@ -14,11 +14,11 @@ public class TransactionManager {
 	
 	private final int TX_LIMIT = 100;
 	
-	ConcurrentHashMap<Integer, Transaction> transactions;
-	int txID;
+	ConcurrentHashMap<Long, Transaction> transactions;
+	long txID;
 	
 	private TransactionManager() {
-		transactions = new ConcurrentHashMap<Integer, Transaction>();
+		transactions = new ConcurrentHashMap<Long, Transaction>();
 		txID = 1;
 	}
     private static class BillPushSingleton {
@@ -29,12 +29,14 @@ public class TransactionManager {
         return BillPushSingleton.INSTANCE;
     }
     
-    
-    public int createTx() {
+    /**
+     * This method creates a transaction
+     * @return transaction id
+     */
+    public long createTx() {
     	if(transactions.size() >= TX_LIMIT) {
     		return -1;
     	}
-    	// TODO: what happen if txID overflow?
     	transactions.put(txID, new Transaction(txID));
     	txID++;
     	return txID - 1;
@@ -47,7 +49,7 @@ public class TransactionManager {
      * @param bookID
      * @return -1 if invalid action, 1 if valid action
      */
-    public int addActionToTx(int id, String actionName, int bookID) {
+    public int addActionToTx(long id, String actionName, long bookID) {
     	// validate action type
     	if(!actionName.equals(RETURN) && !actionName.equals(LOAN)) {
     		System.out.println("wrong action name: " + actionName);
@@ -64,8 +66,8 @@ public class TransactionManager {
 	 * @return 1: successful commit
 	 * @return -1: unsuccessful commit
 	 */
-    public int commitTx(int id) {
-    	System.out.println("commiting transaction: " + Integer.toString(id));
+    public int commitTx(long id) {
+    	System.out.println("commiting transaction: " + Long.toString(id));
     	Transaction tx;
     	try {
     		tx = transactions.get(id);
@@ -81,7 +83,7 @@ public class TransactionManager {
      * @return 1: successful cancellation
      * @return -1: unsuccessful cancellation
      */
-    public int cancelTx(int id) {
+    public int cancelTx(long id) {
     	try{
     		transactions.remove(id);
     		return 1;

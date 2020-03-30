@@ -60,7 +60,7 @@ public class TransactionRequestHandler implements HttpRequestHandler {
 		case("POST"):
 			// commit or cancel a transaction
 			if(txData!=null) {
-				int txID = (int)txData.get(TX);
+				long txID = ((Number)txData.get(TX)).longValue();
 				int result;
 				
 				switch((String) txData.get(TX_OP)) {
@@ -82,7 +82,7 @@ public class TransactionRequestHandler implements HttpRequestHandler {
 			}
 			// request transaction id
 			else {
-				int txID = TransactionManager.getInstance().createTx();
+				long txID = TransactionManager.getInstance().createTx();
 				if(txID!=-1) {
 					response.setStatusCode(HttpStatus.SC_OK);
 					ObjectMapper mapper = new ObjectMapper();
@@ -99,7 +99,7 @@ public class TransactionRequestHandler implements HttpRequestHandler {
 			
 		// prepare operation
 		case("PUT"):
-			int result = TransactionManager.getInstance().addActionToTx((int)txData.get(TX), (String)txData.get(TX_ACT), (int)txData.get(TX_BKID));
+			int result = TransactionManager.getInstance().addActionToTx(((Number)txData.get(TX)).longValue(), (String)txData.get(TX_ACT), ((Number)txData.get(TX_BKID)).longValue());
 			if(result == 1) response.setStatusCode(HttpStatus.SC_OK);
 			else { response.setStatusCode(HttpStatus.SC_BAD_REQUEST); }			
 			break;

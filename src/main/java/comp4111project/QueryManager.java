@@ -177,9 +177,9 @@ public class QueryManager {
      * @param book
      * @return newBookID if a new book can be added; -1 if book already exists; -2 if bad requests
      */
-    public int addBook(ConcurrentHashMap<String, Object> book) {
+    public long addBook(ConcurrentHashMap<String, Object> book) {
     	try {
-    		int existID = bookExist(book);
+    		long existID = bookExist(book);
 			if(existID != -1) {
 				return -existID;
 			}
@@ -205,10 +205,10 @@ public class QueryManager {
 				insertStmt.executeUpdate();
 
 				try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
-					int newID;
+					long newID;
 					// insert successfully
 		            if (generatedKeys.next()) {
-		                newID = generatedKeys.getInt(1);
+		                newID = generatedKeys.getLong(1);
 		            }
 		            // unsuccessful insert
 		            else {
@@ -235,14 +235,15 @@ public class QueryManager {
      * @param id
      * @return 1: success; -1: query fail
      */
-    public int deleteBook(int id) {
+    public int deleteBook(String id) {
     	
-    	if(bookExist(id)!=-1) {
+    	long bookID = Long.parseLong(id);
+    	if(bookExist(bookID) != -1) {
     		try {
 				Connection conn = connectionPool.getConnection();
 				String deleteBookQuery ="DELETE FROM " + BOOKTABLE + " WHERE " + ID + "= ?";
 		    	PreparedStatement deleteBookStmt = conn.prepareStatement(deleteBookQuery);
-		    	deleteBookStmt.setInt (1, id);
+		    	deleteBookStmt.setLong (1, bookID);
 		    	deleteBookStmt.executeUpdate();
 		    	deleteBookStmt.close();
 		    	connectionPool.closeConnection(conn);
@@ -254,7 +255,7 @@ public class QueryManager {
     		return -1;
     	}
     	else
-    		System.out.println(Integer.toString(id) + " book doesn't exist...");
+    		System.out.println(Long.toString(bookID) + " book doesn't exist...");
     		return -1;
     }
     
@@ -309,14 +310,14 @@ public class QueryManager {
      * @return true: book exists
      * @return false: book does not exist or query fail
      */
-    private int bookExist(int bookID) {
-    	int exist = -1;
+    private long bookExist(long bookID) {
+    	long exist = -1;
     	try {
     		Connection conn = connectionPool.getConnection();
     		String findBookQuery =
 				"SELECT * FROM " + BOOKTABLE  + " WHERE "+  ID + "=?" ;
     		PreparedStatement findBookStmt = conn.prepareStatement(findBookQuery);
-    		findBookStmt.setInt (1, bookID);
+    		findBookStmt.setLong (1, bookID);
     		findBookStmt.execute();
     		ResultSet rs = findBookStmt.getResultSet();
     		if(rs.next()) {
@@ -341,8 +342,8 @@ public class QueryManager {
      * @return true: book exists
      * @return false: book does not exist or query fail
      */
-    private int bookExist(ConcurrentHashMap<String, Object> book) {
-    	int exist = -1;
+    private long bookExist(ConcurrentHashMap<String, Object> book) {
+    	long exist = -1;
     	try {
 			Connection conn = connectionPool.getConnection();
 			
@@ -382,14 +383,14 @@ public class QueryManager {
      * @param bookID
      * @return 1 if book exist and available; 0 if book exist but unavailable; -1 if book doesn't exist; -2 if query fail
      */
-    public int bookAvailability(int bookID) {
+    public int bookAvailability(long bookID) {
     	int status;
     	try {
     		Connection conn = connectionPool.getConnection();
     		String findBookQuery =
 				"SELECT * FROM " + BOOKTABLE  + " WHERE "+  ID + "=?" ;
     		PreparedStatement findBookStmt = conn.prepareStatement(findBookQuery);
-    		findBookStmt.setInt (1, bookID);
+    		findBookStmt.setLong (1, bookID);
     		findBookStmt.execute();
     		ResultSet rs = findBookStmt.getResultSet();
     		// book exist

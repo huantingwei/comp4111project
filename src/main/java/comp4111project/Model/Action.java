@@ -2,9 +2,9 @@ package comp4111project.Model;
 
 public class Action {
 	private String action;
-	private int bookid;
+	private long bookid;
 	
-	public Action(String action, int bookid) {
+	public Action(String action, long bookid) {
 		this.action = action;
 		this.bookid = bookid;
 	}
@@ -12,7 +12,7 @@ public class Action {
 	public String getName() {
 		return action;
 	}
-	public int getBookID() {
+	public long getBookID() {
 		return bookid;
 	}
 	
