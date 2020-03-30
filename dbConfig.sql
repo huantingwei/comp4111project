@@ -1,7 +1,7 @@
 CREATE DATABASE comp4111project;
 USE comp4111project;
 CREATE TABLE book
-( 	bookid int(50) NOT NULL AUTO_INCREMENT,
+( 	bookid bigint(50) NOT NULL AUTO_INCREMENT,
 	Title varchar(100) NOT NULL,
 	Author varchar(100) NOT NULL,
     Publisher varchar(100) NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE book
 	PRIMARY KEY (bookid)
 );
 CREATE TABLE user
-( 	userid int(30) NOT NULL,
+( 	userid bigint(30) NOT NULL,
 	Username varchar(50) NOT NULL,
 	Password varchar(50) NOT NULL,
 	PRIMARY KEY (userid)
