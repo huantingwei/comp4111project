@@ -179,8 +179,9 @@ public class QueryManager {
      */
     public int addBook(ConcurrentHashMap<String, Object> book) {
     	try {
-			if(bookExist(book)) {
-				return -1;
+    		int existID = bookExist(book);
+			if(existID != -1) {
+				return -existID;
 			}
 			// does not exist
 			// add book
@@ -211,7 +212,7 @@ public class QueryManager {
 		            }
 		            // unsuccessful insert
 		            else {
-		            	newID = -2;
+		            	newID = 0;
 		            }
 		            generatedKeys.close();
 	                insertStmt.close();
@@ -227,7 +228,7 @@ public class QueryManager {
 			e.printStackTrace();
 		}
     	// bad request
-    	return -2;
+    	return 0;
     }
     /**
      * This function delete the book record with specified book id
@@ -236,7 +237,7 @@ public class QueryManager {
      */
     public int deleteBook(int id) {
     	
-    	if(bookExist(id)) {
+    	if(bookExist(id)!=-1) {
     		try {
 				Connection conn = connectionPool.getConnection();
 				String deleteBookQuery ="DELETE FROM " + BOOKTABLE + " WHERE " + ID + "= ?";
@@ -308,7 +309,8 @@ public class QueryManager {
      * @return true: book exists
      * @return false: book does not exist or query fail
      */
-    private Boolean bookExist(int bookID) {
+    private int bookExist(int bookID) {
+    	int exist = -1;
     	try {
     		Connection conn = connectionPool.getConnection();
     		String findBookQuery =
@@ -317,7 +319,9 @@ public class QueryManager {
     		findBookStmt.setInt (1, bookID);
     		findBookStmt.execute();
     		ResultSet rs = findBookStmt.getResultSet();
-    		Boolean exist = rs.next();
+    		if(rs.next()) {
+    			exist = rs.getInt(ID);
+    		}
     		
     		rs.close();
     		findBookStmt.close();
@@ -328,7 +332,7 @@ public class QueryManager {
     	} catch(SQLException e){
     		e.printStackTrace();
     	}
-    	return false;
+    	return exist;
 	
     }
     /**
@@ -337,7 +341,8 @@ public class QueryManager {
      * @return true: book exists
      * @return false: book does not exist or query fail
      */
-    private Boolean bookExist(ConcurrentHashMap<String, Object> book) {
+    private int bookExist(ConcurrentHashMap<String, Object> book) {
+    	int exist = -1;
     	try {
 			Connection conn = connectionPool.getConnection();
 			
@@ -346,7 +351,7 @@ public class QueryManager {
 			String publisher = (String) book.get(PUBLISHER);
 			int year = (Integer) book.get(YEAR);
 			
-			String query = "SELECT " + ID + " FROM " + BOOKTABLE + " WHERE " 
+			String query = "SELECT * FROM " + BOOKTABLE + " WHERE " 
 					+ TITLE + "= ? AND " + AUTHOR + "= ? AND " + PUBLISHER + "= ? AND " + YEAR + "= ?; ";
 			PreparedStatement searchStmt = conn.prepareStatement(query);
 			searchStmt.setString(1, title);
@@ -356,7 +361,9 @@ public class QueryManager {
 			ResultSet searchRs = searchStmt.executeQuery();
 
 			// already exist
-			Boolean exist = searchRs.next();
+			if(searchRs.next()) {
+				exist = searchRs.getInt(ID);
+			}
 			searchStmt.close();
 			searchRs.close();
 			connectionPool.closeConnection(conn);
@@ -365,7 +372,7 @@ public class QueryManager {
     	} catch (SQLException e) {
     		e.printStackTrace();
     	}
-    	return false;
+    	return exist;
     }
     
     

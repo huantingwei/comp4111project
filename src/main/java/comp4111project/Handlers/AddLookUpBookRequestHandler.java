@@ -139,13 +139,11 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 	}
 	
 	private HttpResponse addBook(HttpResponse response, int newBookID, String token) {
-		if(newBookID == -1) {
-			// TODO: Duplicate record: /books/1
-			// need to return the duplicate book id in QueryManager
-			response.addHeader("Duplicate record:", "/books/");
+		if(newBookID < 0) {
+			response.addHeader("Duplicate record:", "/books/"+Integer.toString(-newBookID));
             response.setStatusCode(HttpStatus.SC_CONFLICT);
 		}
-		else if(newBookID == -2) {
+		else if(newBookID == 0) {
 			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 		}
 		else {
