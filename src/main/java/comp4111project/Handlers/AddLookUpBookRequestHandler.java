@@ -138,9 +138,9 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 		}
 	}
 	
-	private HttpResponse addBook(HttpResponse response, int newBookID, String token) {
+	private HttpResponse addBook(HttpResponse response, long newBookID, String token) {
 		if(newBookID < 0) {
-			response.addHeader("Duplicate record:", "/books/"+Integer.toString(-newBookID));
+			response.addHeader("Duplicate record:", "/books/"+ -newBookID);
             response.setStatusCode(HttpStatus.SC_CONFLICT);
 		}
 		else if(newBookID == 0) {

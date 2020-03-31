@@ -67,13 +67,20 @@ public class QueryManager {
 
                     if(key.equals("author")) {
                         searchQuery += " " + capitalize(key) + " LIKE" + " '%" + value + "%'" + " AND";
-                    } else if(key.equals("id") || key.equals("title") || key.equals("publisher") || key.equals("year")) {
+                    } else if(key.equals("id")) {
+						searchQuery += " bookid LIKE" + " '%" + value + "%'" + " AND";
+					} else if(key.equals("title") || key.equals("publisher") || key.equals("year")) {
                         searchQuery += " " + capitalize(key) + " =" + " '" + value +"'" + " AND";
                     }
                 }
                 searchQuery = searchQuery.substring(0, searchQuery.length() - 3);
                 if(queryPairs.containsKey("sortby")) {
-                    searchQuery += " " + "ORDER BY " + queryPairs.get("sortby");
+                	if(queryPairs.get("sortby").equals("id")) {
+						searchQuery += " " + "ORDER BY bookid";
+					} else {
+						searchQuery += " " + "ORDER BY " + queryPairs.get("sortby");
+					}
+
                 }
                 if(queryPairs.containsKey("order")) {
                     searchQuery += " " + queryPairs.get("order");
