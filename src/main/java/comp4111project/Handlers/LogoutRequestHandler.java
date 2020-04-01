@@ -12,10 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
+import org.apache.http.*;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 
@@ -30,19 +27,21 @@ public class LogoutRequestHandler implements HttpRequestHandler {
 		
 		String token = TokenManager.getInstance().getTokenFromURI(request.getRequestLine().getUri());
 		Future<Boolean> loggedin = Executors.newSingleThreadExecutor().submit(() -> TokenManager.getInstance().validateToken(token));
-    try {
+		try {
 			if(loggedin.get()) {
-        Executors.newSingleThreadExecutor().execute(() -> TokenManager.getInstance().removeUserAndToken(token));
-        response.setStatusCode(HttpStatus.SC_OK);
+				Executors.newSingleThreadExecutor().execute(() -> TokenManager.getInstance().removeUserAndToken(token));
+				response.setStatusCode(HttpStatus.SC_OK);
 			}
-      else{
-        response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-      }
+			else{
+				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 		} catch (ExecutionException e) {
 			e.printStackTrace();
+			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 		}
 
-	}
+		}
 }

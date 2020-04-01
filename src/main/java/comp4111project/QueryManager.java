@@ -15,8 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class QueryManager {
 	private String DBConfigFile = "connection.prop";
     private DBConnection connectionPool;
-    
-    
+
 	private String BOOKTABLE = "book";
 	private String USERTABLE = "user";
 	private String USERNAME = "Username";
@@ -50,8 +49,13 @@ public class QueryManager {
     public static QueryManager getInstance() {
         return BillPushSingleton.INSTANCE;
     }
-    
-    public Vector<Book> getBooks(ConcurrentHashMap<String, String> queryPairs) {
+
+	/**
+	 * Queries the DB with the given parameters and returns a vector of object Book
+	 * @param queryPairs
+	 * @return Vector
+	 */
+	public Vector<Book> getBooks(ConcurrentHashMap<String, String> queryPairs) {
         queryPairs.remove("token");
         Vector<Book> books = new Vector<>();
         String searchQuery;
@@ -73,7 +77,7 @@ public class QueryManager {
                         searchQuery += " " + capitalize(key) + " =" + " '" + value +"'" + " AND";
                     }
                 }
-                searchQuery = searchQuery.substring(0, searchQuery.length() - 3);
+                searchQuery = searchQuery.substring(0, searchQuery.length() - 3); // Removed "AND" at the end
                 if(queryPairs.containsKey("sortby")) {
                 	if(queryPairs.get("sortby").equals("id")) {
 						searchQuery += " " + "ORDER BY bookid";
@@ -95,13 +99,13 @@ public class QueryManager {
             ResultSet rs = searchStmt.executeQuery();
 
             while(rs.next()) {
-                String bookID = rs.getString(ID);
+//                String bookID = rs.getString(ID);
                 String title = rs.getString(TITLE);
                 String bookAuthor = rs.getString(AUTHOR);
                 String publisher = rs.getString(PUBLISHER);
                 int year = rs.getInt(YEAR);
                 System.out.println(title);
-                Book foundBook = new Book(Integer.parseInt(bookID), title, bookAuthor, publisher, year);
+                Book foundBook = new Book(title, bookAuthor, publisher, year); // Omitted idBook
                 books.add(foundBook);
             }
             searchStmt.close();
@@ -116,7 +120,12 @@ public class QueryManager {
         return books;
     }
 
-    private static String capitalize(String str) {
+	/**
+	 * Used as an internal function to capitalize
+	 * @param str
+	 * @return
+	 */
+	private static String capitalize(String str) {
         if(str == null || str.isEmpty()) {
             return str;
         }
@@ -124,7 +133,12 @@ public class QueryManager {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
-    // Returns an integer depending on the status: 0 - 200 OK 1 - No book record 2 - bad request
+	/**
+	 * Returns an integer depending on the status
+	 * @param bookID
+	 * @param isReturningBook 0 - OK -1 - No book record -2 - Bad Request
+	 * @return
+	 */
     public int returnAndLoanBook(String bookID, Boolean isReturningBook) {
         String updateQuery;
         try {
@@ -154,11 +168,11 @@ public class QueryManager {
                         if(result == 1) {
                             return 0; // OK
                         } else {
-                            return 2; // Bad Request
+                            return -2; // Bad Request
                         }
 
                     } catch(Exception ex) {
-                        return 2; // Bad Request
+                        return -2; // Bad Request
                     } finally {
                         rs.close();
                         connectionPool.closeConnection(conn);
@@ -166,16 +180,16 @@ public class QueryManager {
 
                 } else {
                     System.out.println("Book already returned/loaned");
-                    return 2; // The book is already returned
+                    return -2; // The book is already returned or returned
                 }
             } else {
                 System.out.println("no record");
-                return 1; // No book record
+                return -1; // No book record
             }
 
         } catch(Exception ex) {
             System.out.println("error " + ex);
-            return 2; // Bad Request
+            return -2; // Bad Request
         }
     }
     

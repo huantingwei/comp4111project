@@ -1,23 +1,27 @@
 package comp4111project.Model;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
+@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy.class)
 public class Book {
-    int idBook;
+//    int idBook;
     String title;
     String author;
     String publisher;
     int year;
 
-    public Book(int idBook, String title, String author, String publisher, int year) {
-        this.idBook = idBook;
+    public Book(String title, String author, String publisher, int year) {
+//        this.idBook = idBook;
         this.title = title;
         this.author = author;
         this.publisher = publisher;
         this.year = year;
     }
 
-    public int getIdBook() {
-        return idBook;
-    }
+//    public int getIdBook() {
+//        return idBook;
+//    }
 
     public String getTitle() {
         return title;

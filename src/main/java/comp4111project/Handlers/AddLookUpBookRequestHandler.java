@@ -50,39 +50,47 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 		
 			// Add
 			case("POST"):
-				if(request instanceof HttpEntityEnclosingRequest) {
-					HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-					String bookContent = EntityUtils.toString(entity, Consts.UTF_8);
-					ObjectMapper mapper = new ObjectMapper();
-					ConcurrentHashMap<String, Object> newBook = mapper.readValue(bookContent, ConcurrentHashMap.class);
-					
-					try {
-						// get token
-						URI uri = new URI(request.getRequestLine().getUri());
-						ConcurrentHashMap<String, String> query_pairs = new ConcurrentHashMap<String, String>();
-				        String query = uri.getQuery();
-				        String[] pairs = query.split("&");
-				        
-				        for (String pair : pairs) {
-				            int idx = pair.indexOf("=");
-				            query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
-				        }
-				        String token = query_pairs.get("token");
-				        
-            Future<HttpResponse> addFuture = Executors.newSingleThreadExecutor().submit(() -> addBook(response, QueryManager.getInstance().addBook(newBook), token));
-            try {
-              response.setStatusCode(addFuture.get().getStatusLine().getStatusCode());
-              response.setEntity(addFuture.get().getEntity());
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            } catch (ExecutionException e) {
-              e.printStackTrace();
-            }
-					} catch (URISyntaxException | UnsupportedEncodingException e) {
-						e.printStackTrace();
+				try {
+					if(request instanceof HttpEntityEnclosingRequest) {
+						HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+						String bookContent = EntityUtils.toString(entity, Consts.UTF_8);
+						ObjectMapper mapper = new ObjectMapper();
+						ConcurrentHashMap<String, Object> newBook = mapper.readValue(bookContent, ConcurrentHashMap.class);
+
+						try {
+							// get token
+							URI uri = new URI(request.getRequestLine().getUri());
+							ConcurrentHashMap<String, String> query_pairs = new ConcurrentHashMap<String, String>();
+							String query = uri.getQuery();
+							String[] pairs = query.split("&");
+
+							for (String pair : pairs) {
+								int idx = pair.indexOf("=");
+								query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+							}
+							String token = query_pairs.get("token");
+
+							Future<HttpResponse> addFuture = Executors.newSingleThreadExecutor().submit(() -> addBook(response, QueryManager.getInstance().addBook(newBook), token));
+							try {
+								response.setStatusCode(addFuture.get().getStatusLine().getStatusCode());
+								response.setEntity(addFuture.get().getEntity());
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+								response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+							} catch (ExecutionException e) {
+								e.printStackTrace();
+								response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+							}
+						} catch (URISyntaxException | UnsupportedEncodingException e) {
+							e.printStackTrace();
+							response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+						}
 					}
+				} catch(Exception e) {
+					e.printStackTrace();
+					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 				}
-				
+
 				break;
 				
 			// Look up
@@ -100,34 +108,38 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 		            for (ConcurrentHashMap.Entry<String, String> entry : query_pairs.entrySet()) {
 		                System.out.println(entry.getKey() + "/" + entry.getValue());
 		            }
-                try {
-                  Future<Vector> future = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().getBooks(query_pairs));
-                  try {
-                    Vector foundBooks = future.get();
-                    if (foundBooks.isEmpty()) {
-                      response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_NO_CONTENT, "No Content");
-                    } else {
-                      ObjectMapper mapper = new ObjectMapper();
-                      ObjectNode responseObject = mapper.createObjectNode();
-                      responseObject.put("FoundBooks", foundBooks.size());
-                      responseObject.putPOJO("Results", foundBooks);
+					try {
+					  Future<Vector> future = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().getBooks(query_pairs));
+					  try {
+						Vector foundBooks = future.get();
+						if (foundBooks.isEmpty()) {
+						  response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_NO_CONTENT, "No Content");
+						} else {
+						  ObjectMapper mapper = new ObjectMapper();
+						  ObjectNode responseObject = mapper.createObjectNode();
+						  responseObject.put("FoundBooks", foundBooks.size());
+						  responseObject.putPOJO("Results", foundBooks);
 
-                      response.setStatusCode(HttpStatus.SC_OK);
-                      response.setEntity(
-                          new StringEntity(responseObject.toString(),
-                              ContentType.TEXT_PLAIN)
-                      );
-                    }
-                  } catch (InterruptedException e) {
-                    e.printStackTrace();
-                  } catch (ExecutionException e) {
-                    e.printStackTrace();
-                  }
+						  response.setStatusCode(HttpStatus.SC_OK);
+						  response.setEntity(
+							  new StringEntity(responseObject.toString(),
+								  ContentType.TEXT_PLAIN)
+						  );
+						}
+					  } catch (InterruptedException e) {
+						e.printStackTrace();
+						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+					  } catch (ExecutionException e) {
+						e.printStackTrace();
+						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+					  }
                 } catch(Exception e) {
-
+					e.printStackTrace();
+					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
                 }
 		        } catch (URISyntaxException e) {
 		            e.printStackTrace();
+					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 		        }
 
 				break;

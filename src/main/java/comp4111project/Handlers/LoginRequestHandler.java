@@ -6,13 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
+import org.apache.http.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
@@ -39,18 +33,18 @@ public class LoginRequestHandler implements HttpRequestHandler {
 			ObjectMapper mapper = new ObjectMapper();
 			ConcurrentHashMap<String, Object> user = mapper.readValue(userContent, ConcurrentHashMap.class);
 
-			Future<Integer> sucessLoginFuture = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().loginUser(user));
+			Future<Integer> successLoginFuture = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().loginUser(user));
 			try {
-				switch (sucessLoginFuture.get()) {
+				switch (successLoginFuture.get()) {
 					case 1:
 						response.setStatusCode(HttpStatus.SC_OK);
 						String username = (String) user.get("Username");
 						String newToken = TokenManager.getInstance().generateNewToken(username);
-            ObjectNode responseObject = new ObjectMapper().createObjectNode();
-                responseObject.put("Token", newToken);
-                response.setEntity(
-                        new StringEntity(responseObject.toString(),
-                                ContentType.APPLICATION_JSON));
+						ObjectNode responseObject = new ObjectMapper().createObjectNode();
+							responseObject.put("Token", newToken);
+							response.setEntity(
+									new StringEntity(responseObject.toString(),
+											ContentType.APPLICATION_JSON));
             
 						Executors.newSingleThreadExecutor().execute(() -> TokenManager.getInstance().addUserAndToken(username, newToken));
 						break;
@@ -66,8 +60,10 @@ public class LoginRequestHandler implements HttpRequestHandler {
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 			} catch (ExecutionException e) {
 				e.printStackTrace();
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 			}
 		}
 	}
