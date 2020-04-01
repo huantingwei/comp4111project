@@ -30,7 +30,13 @@ public class DBConnection implements DBSource {
         this("jdbc.properties");
     }
     
-    
+    /**
+     * Create a database connection pool "connections" using ArrayList<Connection>
+     * @param configFile
+     * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public DBConnection(String configFile) throws IOException, ClassNotFoundException, SQLException {
         props = new Properties();
         props.load(new FileInputStream(configFile));
@@ -77,7 +83,16 @@ public class DBConnection implements DBSource {
             connections.add(conn);
         }
     }
-        
+    
+    /**
+     * Configure the database initial settings
+     * @param dbName
+     * @param usrTbName
+     * @param usrTbCol
+     * @param bkTbName
+     * @param initNumUser
+     * @throws SQLException
+     */
     private void configureDatabase(String dbName, String usrTbName, List<String> usrTbCol, String bkTbName, int initNumUser) throws SQLException {
     	createDatabase(dbName);
     	createUserTable(usrTbName, usrTbCol);
@@ -143,13 +158,15 @@ public class DBConnection implements DBSource {
     }
     
     /**
-     * initialize 10000 users in the database
+     * initialize users in the database
      * @param usrTbName
      * @param usrTbCol
      * @param numOfUser
      */
     public void initUser(String usrTbName, List<String> usrTbCol, int numOfUser) {
     	
+    	System.out.println("Start initializing " + Integer.toString(numOfUser) + " users.");     
+
     	try {
     		Connection conn = getConnection();
     		String query = "INSERT INTO " + usrTbName + " ("
@@ -181,13 +198,13 @@ public class DBConnection implements DBSource {
     			
     			stmt.addBatch();
     			count++;
-//    			if(count % 100 == 0 || count == numOfUser) {
-//    				stmt.executeBatch();
-//    			}
+    			if(count % 100 == 0 || count == numOfUser) {
+    				stmt.executeBatch();
+    			}
     		}
     		stmt.executeBatch();
     		closeConnection(conn);
-    		System.out.println("Finished inserting " + Integer.toString(numOfUser) + ".");
+    		System.out.println("Finished initializing " + Integer.toString(numOfUser) + "users.");
     	} catch (Exception e){
     	      System.err.println("Got an exception!");
     	      System.err.println(e.getMessage());

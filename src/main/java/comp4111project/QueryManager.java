@@ -136,8 +136,8 @@ public class QueryManager {
 	/**
 	 * Returns an integer depending on the status
 	 * @param bookID
-	 * @param isReturningBook 0 - OK -1 - No book record -2 - Bad Request
-	 * @return
+	 * @param isReturningBook 
+	 * @return 0 - OK -1 - No book record -2 - Bad Request
 	 */
     public int returnAndLoanBook(String bookID, Boolean isReturningBook) {
         String updateQuery;
@@ -283,9 +283,7 @@ public class QueryManager {
     /**
      * This function checks if the user exist and the username and password is correct
      * @param user
-     * @return 1: correct username and password, has not logged in yet
-     * @return -1: user has logged in
-     * @return -2: incorrect username/password or query fail
+     * @return 1: correct username and password, has not logged in yet; -1: user has logged in; -2: incorrect username/password or query fail
      */
     public int loginUser(ConcurrentHashMap<String, Object> user) {
     	String usr = (String) user.get("Username");
@@ -328,8 +326,7 @@ public class QueryManager {
     /**
      * This method checks if the book exists in the database using book id
      * @param int bookID
-     * @return true: book exists
-     * @return false: book does not exist or query fail
+     * @return true: book exists; false: book does not exist or query fail
      */
     private long bookExist(long bookID) {
     	long exist = -1;

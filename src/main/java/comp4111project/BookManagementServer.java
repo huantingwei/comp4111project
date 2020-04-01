@@ -53,11 +53,12 @@ public class BookManagementServer {
                     .build();
         }
         
-        // for testing...init user in the database
+        /**
+         *  for testing...initialize 100 users in the database
+         */
 //        DBConnection conn = new DBConnection("connection.prop");
 //        conn.initUser("user", Arrays.asList("userid", "Username", "Password"), 100);
-//        System.out.println("Finished inserting 100 users");
-//        
+
         /**
          * Map the RequestHandlers to each urls
          */

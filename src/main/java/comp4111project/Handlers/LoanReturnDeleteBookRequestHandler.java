@@ -3,11 +3,6 @@ package comp4111project.Handlers;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.concurrent.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,9 +11,6 @@ import comp4111project.QueryManager;
 import comp4111project.TokenManager;
 
 import org.apache.http.*;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.util.EntityUtils;
