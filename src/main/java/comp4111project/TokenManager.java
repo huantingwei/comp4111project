@@ -39,9 +39,15 @@ public class TokenManager {
     	userToToken.remove(user);
     }
     
-    public synchronized void addUserAndToken(String user, String token) {
-    	tokenToUser.put(token, user);
-    	userToToken.put(user, token);
+    public synchronized boolean addUserAndToken(String user, String token) {
+		try {
+			tokenToUser.put(token, user);
+			userToToken.put(user, token);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+
     }
     
 	public String generateNewToken(String username) {
@@ -70,7 +76,7 @@ public class TokenManager {
     }
     
     public Boolean validateToken(String token) {
-        return tokenToUser.get(token) != null;
+		return tokenToUser.get(token) != null;
     }
 
     public Boolean validateUser(String username) {

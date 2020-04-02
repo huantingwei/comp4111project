@@ -31,12 +31,13 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-		System.out.println("Adding or Looking Up a Book");
-		System.out.println(request.getRequestLine().getMethod());
+//		System.out.println("Adding or Looking Up a Book");
+//		System.out.println(request.getRequestLine().getMethod());
 		
 		Future<Boolean> validateTokenFuture = Executors.newSingleThreadExecutor().submit(() ->TokenManager.getInstance().validateTokenFromURI(request.getRequestLine().getUri()));
 		try {
 			if(!validateTokenFuture.get()) {
+				System.out.println("s");
 				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 				return;
 			}

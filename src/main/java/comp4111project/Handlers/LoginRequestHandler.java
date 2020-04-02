@@ -40,13 +40,15 @@ public class LoginRequestHandler implements HttpRequestHandler {
 						response.setStatusCode(HttpStatus.SC_OK);
 						String username = (String) user.get("Username");
 						String newToken = TokenManager.getInstance().generateNewToken(username);
-						ObjectNode responseObject = new ObjectMapper().createObjectNode();
+
+						Future<Boolean> futureAddToken = Executors.newSingleThreadExecutor().submit(() -> TokenManager.getInstance().addUserAndToken(username, newToken));
+						if(futureAddToken.get()) {
+							ObjectNode responseObject = new ObjectMapper().createObjectNode();
 							responseObject.put("Token", newToken);
 							response.setEntity(
 									new StringEntity(responseObject.toString(),
 											ContentType.APPLICATION_JSON));
-            
-						Executors.newSingleThreadExecutor().execute(() -> TokenManager.getInstance().addUserAndToken(username, newToken));
+						}
 						break;
 					case -1:
 						response.setStatusCode(HttpStatus.SC_CONFLICT);
