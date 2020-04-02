@@ -29,8 +29,13 @@ public class LogoutRequestHandler implements HttpRequestHandler {
 		Future<Boolean> loggedin = Executors.newSingleThreadExecutor().submit(() -> TokenManager.getInstance().validateToken(token));
 		try {
 			if(loggedin.get()) {
-				Executors.newSingleThreadExecutor().execute(() -> TokenManager.getInstance().removeUserAndToken(token));
-				response.setStatusCode(HttpStatus.SC_OK);
+				Future<Boolean> futureRemoveToken = Executors.newSingleThreadExecutor().submit(() -> TokenManager.getInstance().removeUserAndToken(token));
+				if(futureRemoveToken.get()) {
+					response.setStatusCode(HttpStatus.SC_OK);
+				}
+				else {
+					response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				}
 			}
 			else{
 				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
@@ -43,5 +48,5 @@ public class LogoutRequestHandler implements HttpRequestHandler {
 			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 		}
 
-		}
+	}
 }

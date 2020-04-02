@@ -33,10 +33,15 @@ public class TokenManager {
     	else return false;
     }
         
-    public synchronized void removeUserAndToken(String token) {
-    	String user = getUserFromToken(token);
-    	tokenToUser.remove(token);
-    	userToToken.remove(user);
+    public synchronized boolean removeUserAndToken(String token) {
+    	try{
+    		String user = getUserFromToken(token);
+    		tokenToUser.remove(token);
+    		userToToken.remove(user);
+    		return true;
+    	} catch (Exception e) {
+			return false;
+		}    	
     }
     
     public synchronized boolean addUserAndToken(String user, String token) {
