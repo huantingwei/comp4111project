@@ -94,7 +94,7 @@ public class QueryManager {
                 }
             }
 
-            System.out.println(searchQuery);
+//            System.out.println(searchQuery);
             PreparedStatement searchStmt = conn.prepareStatement(searchQuery);
             ResultSet rs = searchStmt.executeQuery();
 
@@ -104,7 +104,7 @@ public class QueryManager {
                 String bookAuthor = rs.getString(AUTHOR);
                 String publisher = rs.getString(PUBLISHER);
                 int year = rs.getInt(YEAR);
-                System.out.println(title);
+//                System.out.println(title);
                 Book foundBook = new Book(title, bookAuthor, publisher, year); // Omitted idBook
                 books.add(foundBook);
             }
@@ -150,7 +150,7 @@ public class QueryManager {
 
             if (rs.next()) {
                 if(rs.getBoolean(AVAILABLE) == (isReturningBook ? false : true)) {
-                    System.out.println("ready to be returned/loaned");
+//                    System.out.println("ready to be returned/loaned");
                     try {
                         if(isReturningBook) {
                             updateQuery = "UPDATE " + BOOKTABLE + " SET " + AVAILABLE + " = '1' WHERE " + ID + " = " + " '" + bookID + "' ";
@@ -179,16 +179,16 @@ public class QueryManager {
                     }
 
                 } else {
-                    System.out.println("Book already returned/loaned");
+//                    System.out.println("Book already returned/loaned");
                     return -2; // The book is already returned or returned
                 }
             } else {
-                System.out.println("no record");
+//                System.out.println("no record");
                 return -1; // No book record
             }
 
         } catch(Exception ex) {
-            System.out.println("error " + ex);
+//            System.out.println("error " + ex);
             return -2; // Bad Request
         }
     }
@@ -276,7 +276,7 @@ public class QueryManager {
     		return -1;
     	}
     	else
-    		System.out.println(Long.toString(bookID) + " book doesn't exist...");
+//    		System.out.println(Long.toString(bookID) + " book doesn't exist...");
     		return -1;
     }
     

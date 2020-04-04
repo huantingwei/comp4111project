@@ -69,10 +69,7 @@ public class LoginRequestHandler implements HttpRequestHandler {
 						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 						break;
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
-			} catch (ExecutionException e) {
+			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 			}

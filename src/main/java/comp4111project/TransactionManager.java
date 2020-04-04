@@ -52,7 +52,6 @@ public class TransactionManager {
     public int addActionToTx(long id, String actionName, long bookID) {
     	// validate action type
     	if(!actionName.equals(RETURN) && !actionName.equals(LOAN)) {
-    		System.out.println("wrong action name: " + actionName);
     		return -1;
     	}
     	else {
@@ -67,13 +66,11 @@ public class TransactionManager {
 	 * @return -1: unsuccessful commit
 	 */
     public int commitTx(long id) {
-    	System.out.println("commiting transaction: " + Long.toString(id));
     	Transaction tx;
     	try {
     		tx = transactions.get(id);
     		return tx.executeAction();
     	} catch (Exception e) {
-    		System.out.println("Exception occurs during committing transaction...");
     		return -1;
     	}
     }
@@ -88,7 +85,6 @@ public class TransactionManager {
     		transactions.remove(id);
     		return 1;
     	} catch (Exception e){
-    		System.out.println("Exception occurs during canceling transaction...");
     		return -1;
     	}
     }

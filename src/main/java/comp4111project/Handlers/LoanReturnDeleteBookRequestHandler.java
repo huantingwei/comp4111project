@@ -19,14 +19,19 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 	
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-		System.out.println("Loan, return, delete book");
 
 		// validate token
-		if(!TokenManager.getInstance().validateTokenFromURI(request.getRequestLine().getUri())) {
-			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-			return;
-		}
-        
+		Future<Boolean> validateTokenFuture = Executors.newSingleThreadExecutor().submit(() ->TokenManager.getInstance().validateTokenFromURI(request.getRequestLine().getUri()));
+		try {
+			if(!validateTokenFuture.get()) {
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+				return;
+			}
+		} catch (InterruptedException | ExecutionException e) {
+			e.printStackTrace();
+		} 
+		
+        // loan, return, or delete book
 		switch (request.getRequestLine().getMethod()) {
 			case("PUT"):
 				try {
@@ -46,10 +51,9 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 
 						try {
 							response.setStatusLine(returnLoanFuture.get().getStatusLine());
-						} catch (InterruptedException e) {
+						} catch (InterruptedException | ExecutionException e) {
 							e.printStackTrace();
-						} catch (ExecutionException e) {
-							e.printStackTrace();
+							response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 						}
 					}
 				} catch(Exception e) {
@@ -57,6 +61,7 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 				}
 				break;
+				
 			case("DELETE"):
 				try {
 					URI uri = new URI(request.getRequestLine().getUri());
@@ -67,11 +72,10 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 					Future<HttpResponse> deleteFuture = Executors.newSingleThreadExecutor().submit(() -> deleteBook(response, QueryManager.getInstance().deleteBook(bookID)));
 					try {
 						response.setStatusLine(deleteFuture.get().getStatusLine());
-					} catch (InterruptedException e) {
+					} catch (InterruptedException | ExecutionException e) {
 						e.printStackTrace();
-					} catch (ExecutionException e) {
-						e.printStackTrace();
-					}
+						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+					} 
 				} catch (URISyntaxException e) {
 					e.printStackTrace();
 					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
@@ -84,7 +88,12 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 		}
 	}
 	
-
+	/**
+	 * This method verifies if book is deleted successfully
+	 * @param response
+	 * @param result
+	 * @return HttpResponse
+	 */
 	private HttpResponse deleteBook(HttpResponse response, int result) {
 		if(result == 1) {
 			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
@@ -94,7 +103,12 @@ public class LoanReturnDeleteBookRequestHandler implements HttpRequestHandler {
 		}
 		return response;
 	}
-	
+	/**
+	 * This method verifies if book is loaned or returned successfully
+	 * @param response
+	 * @param result
+	 * @return HttpResponse
+	 */
 	private HttpResponse loanOrReturnBook(HttpResponse response, int result) {
 		switch(result) {
 			case(0):
