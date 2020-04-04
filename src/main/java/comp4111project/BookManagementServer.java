@@ -54,10 +54,9 @@ public class BookManagementServer {
         }
         
         /**
-         *  for testing...initialize 100 users in the database
+         *  Initialize 100 users in the database
          */
-//        DBConnection conn = new DBConnection("connection.prop");
-//        conn.initUser("user", Arrays.asList("userid", "Username", "Password"), 100);
+        QueryManager.getInstance().initUser("user", Arrays.asList("userid", "Username", "Password"), 100);
 
         /**
          * Map the RequestHandlers to each urls

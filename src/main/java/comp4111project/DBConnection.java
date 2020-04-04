@@ -90,14 +90,12 @@ public class DBConnection implements DBSource {
      * @param usrTbName
      * @param usrTbCol
      * @param bkTbName
-     * @param initNumUser
      * @throws SQLException
      */
-    private void configureDatabase(String dbName, String usrTbName, List<String> usrTbCol, String bkTbName, int initNumUser) throws SQLException {
+    private void configureDatabase(String dbName, String usrTbName, List<String> usrTbCol, String bkTbName) throws SQLException {
     	createDatabase(dbName);
     	createUserTable(usrTbName, usrTbCol);
     	createBookTable(bkTbName);
-    	initUser(usrTbName, usrTbCol, initNumUser);
     }
     
     /**
@@ -110,6 +108,8 @@ public class DBConnection implements DBSource {
     	String query = "CREATE DATABASE " + dbName + ";";
     	PreparedStatement stmt = conn.prepareStatement(query);
     	stmt.executeUpdate();
+    	stmt.close();
+    	closeConnection(conn);
     }
     
     /**
@@ -135,6 +135,8 @@ public class DBConnection implements DBSource {
     			+ ");" ;
     	PreparedStatement stmt = conn.prepareStatement(query);
        	stmt.executeUpdate();
+       	stmt.close();
+    	closeConnection(conn);
     }
     
     /**
@@ -155,60 +157,8 @@ public class DBConnection implements DBSource {
     			+ "PRIMARY KEY (bookid) );";
     	PreparedStatement stmt = conn.prepareStatement(query);
     	stmt.executeUpdate();
+    	stmt.close();
+    	closeConnection(conn);
     }
     
-    /**
-     * initialize users in the database
-     * @param usrTbName
-     * @param usrTbCol
-     * @param numOfUser
-     */
-    public void initUser(String usrTbName, List<String> usrTbCol, int numOfUser) {
-    	
-    	System.out.println("Start initializing " + Integer.toString(numOfUser) + " users.");     
-
-    	try {
-    		Connection conn = getConnection();
-    		String query = "INSERT INTO " + usrTbName + " ("
-    				+ usrTbCol.get(0) +","
-    				+ usrTbCol.get(1) +","
-    				+ usrTbCol.get(2) + ")" 
-    				+ " VALUES (?, ?, ?);" ;
-    		PreparedStatement stmt = conn.prepareStatement(query);
-    		// user00001 ~ user10000
-    		int count = 0;
-    		int prefixZero = (int) Math.log10(numOfUser);
-    		
-    		for(int i=1; i<=numOfUser; i++) {
-    			// username/password = user/passwd + 00..0 + user number
-    			String usr = "user";
-    			String pwd = "pass";
-
-    			int zeros = prefixZero - (int) Math.log10(i);
-    			for(int z=0; z<zeros; z++) {
-    				usr = usr.concat("0");
-    				pwd = pwd.concat("0");
-    			}
-    			usr = usr.concat(Integer.toString(i));
-    			pwd = pwd.concat(Integer.toString(i));
-    			
-    			stmt.setInt(1,  i);
-    			stmt.setString(2, usr);
-    			stmt.setString(3, pwd);
-    			
-    			stmt.addBatch();
-    			count++;
-    			if(count % 100 == 0 || count == numOfUser) {
-    				stmt.executeBatch();
-    			}
-    		}
-    		stmt.executeBatch();
-    		closeConnection(conn);
-    		System.out.println("Finished initializing " + Integer.toString(numOfUser) + "users.");
-    	} catch (Exception e){
-    	      System.err.println("Got an exception!");
-    	      System.err.println(e.getMessage());
-    	}
-    	
-    }
 }

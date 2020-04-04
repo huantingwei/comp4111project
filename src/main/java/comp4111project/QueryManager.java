@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,14 +32,9 @@ public class QueryManager {
         {
             try {
                 connectionPool = new DBConnection(DBConfigFile);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (SQLException e) {
+            } catch (IOException | ClassNotFoundException | SQLException e) {
                 e.printStackTrace();
             }
-            
         }
     }
 
@@ -50,6 +46,63 @@ public class QueryManager {
         return BillPushSingleton.INSTANCE;
     }
 
+    
+    /**
+     * initialize users in the database
+     * @param usrTbName
+     * @param usrTbCol
+     * @param numOfUser
+     */
+    public void initUser(String usrTbName, List<String> usrTbCol, int numOfUser) {
+    	
+    	System.out.println("Start initializing " + Integer.toString(numOfUser) + " users.");     
+
+    	try {
+    		Connection conn = connectionPool.getConnection();
+    		String query = "INSERT INTO " + usrTbName + " ("
+    				+ usrTbCol.get(0) +","
+    				+ usrTbCol.get(1) +","
+    				+ usrTbCol.get(2) + ")" 
+    				+ " VALUES (?, ?, ?);" ;
+    		PreparedStatement stmt = conn.prepareStatement(query);
+    		// user00001 ~ user10000
+    		int count = 0;
+    		int prefixZero = (int) Math.log10(numOfUser);
+    		
+    		for(int i=1; i<=numOfUser; i++) {
+    			// username/password = user/passwd + 00..0 + user number
+    			String usr = "user";
+    			String pwd = "pass";
+
+    			int zeros = prefixZero - (int) Math.log10(i);
+    			for(int z=0; z<zeros; z++) {
+    				usr = usr.concat("0");
+    				pwd = pwd.concat("0");
+    			}
+    			usr = usr.concat(Integer.toString(i));
+    			pwd = pwd.concat(Integer.toString(i));
+    			
+    			stmt.setInt(1,  i);
+    			stmt.setString(2, usr);
+    			stmt.setString(3, pwd);
+    			
+    			stmt.addBatch();
+    			count++;
+    			if(count % 100 == 0 || count == numOfUser) {
+    				stmt.executeBatch();
+    			}
+    		}
+    		stmt.executeBatch();
+    		stmt.close();
+    		connectionPool.closeConnection(conn);
+    		System.out.println("Finished initializing " + Integer.toString(numOfUser) + " users.");
+    	} catch (Exception e){
+    	      System.err.println("Got an exception!");
+    	      System.err.println(e.getMessage());
+    	}
+    	
+    }
+    
 	/**
 	 * Queries the DB with the given parameters and returns a vector of object Book
 	 * @param queryPairs
