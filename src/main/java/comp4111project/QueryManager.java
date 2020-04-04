@@ -302,15 +302,12 @@ public class QueryManager {
 			int result;
 			// correct username and password
 			if(rs.next()) {
-				System.out.println("Correct username and password");
-				if(TokenManager.getInstance().validateUser(usr)) {
-		    		result = -1;
-		    	}
-				else{ result = 1; } 
+				// if user has already logged in -> result = -1
+				// if user has not logged in -> result = 1
+				result = TokenManager.getInstance().validateUser(usr) ? -1 : 1;
 			}
-			// incorrect username and password
+			// incorrect username and password -> result = -2
 			else {
-				System.out.println("Incorrect username and password");
 				result = -2;
 			}
 			rs.close();
@@ -320,8 +317,8 @@ public class QueryManager {
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return -2;
 		}
-		return -2;
     }	
     /**
      * This method checks if the book exists in the database using book id

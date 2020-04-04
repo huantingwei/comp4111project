@@ -23,23 +23,32 @@ public class LogoutRequestHandler implements HttpRequestHandler {
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
 
-		System.out.println("Logout request");
+		if(!request.getRequestLine().getMethod().equals("GET")) {
+			System.out.println("incorrect method");
+			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+			return;
+		}
+		// concurrency issue?
+		// String token = TokenManager.getInstance().getTokenFromURI(request.getRequestLine().getUri()); 
 		
-		String token = TokenManager.getInstance().getTokenFromURI(request.getRequestLine().getUri());
-		Future<Boolean> loggedin = Executors.newSingleThreadExecutor().submit(() -> TokenManager.getInstance().validateToken(token));
+		Future<String> tokenFuture = Executors.newSingleThreadExecutor().submit(() -> TokenManager.getInstance().getTokenFromURI(request.getRequestLine().getUri()));
 		try {
+			String token = tokenFuture.get();
+			Future<Boolean> loggedin = Executors.newSingleThreadExecutor().submit(() -> TokenManager.getInstance().validateToken(token));
+
 			if(loggedin.get()) {
 				Future<Boolean> futureRemoveToken = Executors.newSingleThreadExecutor().submit(() -> TokenManager.getInstance().removeUserAndToken(token));
 				if(futureRemoveToken.get()) {
-					response.setStatusCode(HttpStatus.SC_OK);
+					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
 				}
 				else {
-					response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 				}
 			}
 			else{
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 			}
+			
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);

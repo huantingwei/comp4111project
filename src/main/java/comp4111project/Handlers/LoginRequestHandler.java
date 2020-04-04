@@ -24,7 +24,12 @@ public class LoginRequestHandler implements HttpRequestHandler {
 	@Override
 	public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
 		
-		System.out.println("Loggin request");
+		// TODO: redundant?
+		// check method == POST
+		if(!request.getRequestLine().getMethod().equals("POST")) {
+			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+			return;
+		}
 		
 		// parse the request body to Map<String, String> inputData
 		if (request instanceof HttpEntityEnclosingRequest) {
@@ -33,11 +38,13 @@ public class LoginRequestHandler implements HttpRequestHandler {
 			ObjectMapper mapper = new ObjectMapper();
 			ConcurrentHashMap<String, Object> user = mapper.readValue(userContent, ConcurrentHashMap.class);
 
+			// check if username and password is correct and if user has already logged in
 			Future<Integer> successLoginFuture = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().loginUser(user));
 			try {
 				switch (successLoginFuture.get()) {
+					// successful login
 					case 1:
-						response.setStatusCode(HttpStatus.SC_OK);
+						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
 						String username = (String) user.get("Username");
 						String newToken = TokenManager.getInstance().generateNewToken(username);
 
@@ -50,14 +57,16 @@ public class LoginRequestHandler implements HttpRequestHandler {
 											ContentType.APPLICATION_JSON));
 						}
 						break;
+					// this user has already logged in
 					case -1:
-						response.setStatusCode(HttpStatus.SC_CONFLICT);
+						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_CONFLICT);
 						break;
+					// incorrect username or password; or query fail
 					case -2:
-						response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 						break;
 					default:
-						response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 						break;
 				}
 			} catch (InterruptedException e) {
@@ -67,6 +76,9 @@ public class LoginRequestHandler implements HttpRequestHandler {
 				e.printStackTrace();
 				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 			}
+		}
+		else {
+			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 		}
 	}
 
