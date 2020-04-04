@@ -2,6 +2,14 @@
 
 This is a RESTful web service in Java language for library book management.
 
+## Setup
+* The default settings of MySQL server are listed in `connection.prop`. Some important settings are:
+1. comp4111project.url=jdbc:mysql://localhost:3306/comp4111project
+2. comp4111project.user=root
+3. comp4111project.password=toor
+* Please do change username and password that are consistent with your database server.
+
+
 ## Running the program
 
 * ``` git clone https://github.com/huantingwei/comp4111project.git```
