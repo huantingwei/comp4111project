@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -34,9 +35,18 @@ import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
 import org.apache.http.nio.protocol.UriHttpAsyncRequestHandlerMapper;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpCoreContext;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.protocol.ResponseConnControl;
+import org.apache.http.protocol.ResponseContent;
+import org.apache.http.protocol.ResponseDate;
+import org.apache.http.protocol.ResponseServer;
 import org.apache.http.ssl.SSLContexts;
 
+import comp4111project.Handlers.NAddLookUpBookRequestHandler;
 import comp4111project.Handlers.NLoginRequestHandler;
+import comp4111project.Handlers.NLogoutRequestHandler;
+import comp4111project.Handlers.NTestRequestHandler;
 
 /**
  * Embedded HTTP/1.1 file server based on a non-blocking I/O model and capable of direct channel
@@ -51,6 +61,9 @@ public class NBookManagementServer {
         InetAddress host =InetAddress.getByName("localhost");
         String ROOT_DIRECTORY = "/BookManagementService";
 
+        // initializing users
+        //QueryManager.getInstance().initUser("user", Arrays.asList("userid", "Username", "Password"), 10000);
+        
         SSLContext sslContext = null;
         if (port == 8443) {
             // Initialize SSL context
@@ -69,7 +82,8 @@ public class NBookManagementServer {
                 new UriHttpAsyncRequestHandlerMapper();
         handlerMapper.register(ROOT_DIRECTORY + "/", new HttpFileHandler());
         handlerMapper.register(ROOT_DIRECTORY + "/login", new NLoginRequestHandler());
-        
+        handlerMapper.register(ROOT_DIRECTORY + "/logout", new NLogoutRequestHandler());
+        handlerMapper.register(ROOT_DIRECTORY + "/books", new NAddLookUpBookRequestHandler());
         
         final IOReactorConfig config = IOReactorConfig.custom()
                 .setSoTimeout(15000)
