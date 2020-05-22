@@ -8,7 +8,7 @@ comp4111project.usertbname=user
 comp4111project.booktbname=book
 comp4111project.usertbcol=userid#Username#Password
 comp4111project.booktbcol=bookid#Title#Author#Publisher#Year#Available
-comp4111project.initnumuser=10000
+comp4111project.initnumuser=100
 
 host="localhost"
 port=8081

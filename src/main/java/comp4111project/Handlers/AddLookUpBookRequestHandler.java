@@ -52,7 +52,8 @@ public class AddLookUpBookRequestHandler implements HttpRequestHandler {
 						HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 						String bookContent = EntityUtils.toString(entity, Consts.UTF_8);
 						ObjectMapper mapper = new ObjectMapper();
-						ConcurrentHashMap<String, Object> newBook = mapper.readValue(bookContent, ConcurrentHashMap.class);
+						//ConcurrentHashMap<String, Object> newBook = mapper.readValue(bookContent, ConcurrentHashMap.class);
+						Book newBook = mapper.readValue(bookContent, Book.class);
 
 						try {
 							// get token
