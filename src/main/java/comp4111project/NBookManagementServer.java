@@ -1,31 +1,24 @@
 package comp4111project;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
-import java.net.URLDecoder;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 
-import org.apache.http.Consts;
 import org.apache.http.ExceptionLogger;
-import org.apache.http.HttpConnection;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.MethodNotSupportedException;
-import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.nio.bootstrap.HttpServer;
 import org.apache.http.impl.nio.bootstrap.ServerBootstrap;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
-import org.apache.http.nio.entity.NFileEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.apache.http.nio.protocol.BasicAsyncRequestConsumer;
 import org.apache.http.nio.protocol.BasicAsyncResponseProducer;
@@ -34,27 +27,16 @@ import org.apache.http.nio.protocol.HttpAsyncRequestConsumer;
 import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
 import org.apache.http.nio.protocol.UriHttpAsyncRequestHandlerMapper;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpCoreContext;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.HttpProcessorBuilder;
-import org.apache.http.protocol.ResponseConnControl;
-import org.apache.http.protocol.ResponseContent;
-import org.apache.http.protocol.ResponseDate;
-import org.apache.http.protocol.ResponseServer;
-import org.apache.http.protocol.UriHttpRequestHandlerMapper;
 import org.apache.http.ssl.SSLContexts;
 
-import comp4111project.Handlers.AddLookUpBookRequestHandler;
-import comp4111project.Handlers.LoanReturnDeleteBookRequestHandler;
-import comp4111project.Handlers.LoginRequestHandler;
-import comp4111project.Handlers.LogoutRequestHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import comp4111project.Handlers.NAddLookUpBookRequestHandler;
 import comp4111project.Handlers.NLoanReturnDeleteBookRequestHandler;
 import comp4111project.Handlers.NLoginRequestHandler;
 import comp4111project.Handlers.NLogoutRequestHandler;
-import comp4111project.Handlers.NTestRequestHandler;
 import comp4111project.Handlers.NTransactionRequestHandler;
-import comp4111project.Handlers.TransactionRequestHandler;
+import comp4111project.Model.Book;
 
 /**
  * Embedded HTTP/1.1 file server based on a non-blocking I/O model and capable of direct channel
@@ -100,8 +82,11 @@ public class NBookManagementServer {
         handlerMapper.register(ROOT_DIRECTORY + "/transaction", transactionRequestHandler);
         
         // initialize connection pool
-        QueryManager qm = QueryManager.getInstance();
+        // initialize 10000 users
+        QueryManager.getInstance();
         System.out.println("Finished initializing connection pool");
+        //qm.initUser("user", Arrays.asList("userid", "Username", "Password"), 10000);
+        System.out.println("Finished initializing 10000 user");
         
         final IOReactorConfig config = IOReactorConfig.custom()
                 .setSoTimeout(15000)
