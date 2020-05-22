@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Base64;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -166,7 +167,7 @@ public class QueryManager {
             connectionPool.closeConnection(conn);
             return books;
         } catch (Exception e) {
-            System.err.println("Got an exception!");
+            System.err.println("Got an exception in getBooks!");
             System.err.println(e.getMessage());
         }
 
@@ -251,7 +252,7 @@ public class QueryManager {
      * @param book
      * @return newBookID if a new book can be added; -1 if book already exists; -2 if bad requests
      */
-    public long addBook(ConcurrentHashMap<String, Object> book) {
+    public long addBook(Book book) {
     	try {
     		long existID = bookExist(book);
 			if(existID != -1) {
@@ -260,15 +261,21 @@ public class QueryManager {
 			// does not exist
 			// add book
 			else {		
-				Connection conn = connectionPool.getConnection();
-				String title = (String) book.get(TITLE);
-				String author = (String) book.get(AUTHOR);
-				String publisher = (String) book.get(PUBLISHER);
-				int year = (Integer) book.get(YEAR);
+				
+				String title = book.getTitle();
+				String author = book.getAuthor();
+				String publisher = book.getPublisher();
+				int year = book.getYear();	
+							
+//				String title = (String) book.get(TITLE);
+//				String author = (String) book.get(AUTHOR);
+//				String publisher = (String) book.get(PUBLISHER);
+//				int year = (Integer) book.get(YEAR);
 				
 				String addBookQuery ="INSERT INTO " + BOOKTABLE + "(" + TITLE + "," + AUTHOR + "," + PUBLISHER + "," + YEAR + "," + AVAILABLE + ")"
 				        + " VALUES (?, ?, ?, ?, ?)";
-
+				
+				Connection conn = connectionPool.getConnection();
 				PreparedStatement insertStmt = conn.prepareStatement(addBookQuery, Statement.RETURN_GENERATED_KEYS);
 				insertStmt.setString (1, title);
 				insertStmt.setString (2, author);
@@ -292,10 +299,11 @@ public class QueryManager {
 	                insertStmt.close();
 	                connectionPool.closeConnection(conn);
 	                return newID;
-		        } finally {
-	                insertStmt.close();
-	                connectionPool.closeConnection(conn);
-		        }
+				}
+//		        } finally {
+//	                insertStmt.close();
+//	                connectionPool.closeConnection(conn);
+//		        }
 			}
 
 		} catch (SQLException e) {
@@ -304,6 +312,7 @@ public class QueryManager {
     	// bad request
     	return 0;
     }
+    
     /**
      * This function delete the book record with specified book id
      * @param id
@@ -333,6 +342,31 @@ public class QueryManager {
     		return -1;
     }
     
+    private boolean validateUser(String usr, String pwd) {
+    	Connection conn;
+		try {
+			conn = connectionPool.getConnection();
+    	
+			String checkUserQuery = "SELECT 1 FROM " + USERTABLE  + " WHERE "
+					+  USERNAME + "=" + " ? " + "AND " + PASSWORD + "=" + " ? "
+					;//+ "LOCK IN SHARE MODE" ;
+			PreparedStatement stmt = conn.prepareStatement(checkUserQuery);
+			stmt.setString(1, usr);
+			stmt.setString(2, pwd);
+			ResultSet rs = stmt.executeQuery();
+			
+			boolean correctUser = rs.next();
+			rs.close();
+			stmt.close();
+			connectionPool.closeConnection(conn);
+			return correctUser;
+			
+		} catch (SQLException e) {
+			System.out.println("sql exception in validateUser()");
+			//e.printStackTrace();
+			return false;
+		}
+    }
     /**
      * This function checks if the user exist and the username and password is correct
      * @param user
@@ -342,40 +376,25 @@ public class QueryManager {
     	String usr = (String) user.get("Username");
 		String pwd = (String) user.get("Password");
 		
-		try {
-			Connection conn = connectionPool.getConnection();
+		boolean correctUser = validateUser(usr, pwd);
 			
-			String checkUserQuery = "SELECT 1 FROM " + USERTABLE  + " WHERE "
-									+  USERNAME + "=" + " ? " + "AND " + PASSWORD + "=" + " ? ";
-			PreparedStatement stmt = conn.prepareStatement(checkUserQuery);
-			stmt.setString(1, usr);
-			stmt.setString(2, pwd);
-			ResultSet rs = stmt.executeQuery();
-			
-			int result;
-			// correct username and password
-			if(rs.next()) {
-				// if user has already logged in -> result = -1
-				// if user has not logged in -> result = 1
-				result = TokenManager.getInstance().validateUser(usr) ? -1 : 1;
-			}
-			// incorrect username and password -> result = -2
-			else {
-				result = -2;
-			}
-			rs.close();
-			stmt.close();
-			connectionPool.closeConnection(conn);
-			return result;
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return -2;
+		int result;
+		// correct username and password
+		if(correctUser) {
+			// if user has already logged in -> result = -1
+			// if user has not logged in -> result = 1
+			result = TokenManager.getInstance().validateUser(usr) ? -1 : 1;
 		}
+		// incorrect username and password -> result = -2
+		else {
+			result = -2;
+		}
+		return result;
     }	
-    /**
+    
+	/**
      * This method checks if the book exists in the database using book id
-     * @param int bookID
+     * @param long bookID
      * @return true: book exists; false: book does not exist or query fail
      */
     private long bookExist(long bookID) {
@@ -410,15 +429,20 @@ public class QueryManager {
      * @return true: book exists
      * @return false: book does not exist or query fail
      */
-    private long bookExist(ConcurrentHashMap<String, Object> book) {
+    private long bookExist(Book book) {
     	long exist = -1;
     	try {
 			Connection conn = connectionPool.getConnection();
 			
-			String title = (String) book.get(TITLE);
-			String author = (String) book.get(AUTHOR);
-			String publisher = (String) book.get(PUBLISHER);
-			int year = (Integer) book.get(YEAR);
+//			String title = (String) book.get(TITLE);
+//			String author = (String) book.get(AUTHOR);
+//			String publisher = (String) book.get(PUBLISHER);
+//			int year = (Integer) book.get(YEAR);
+			
+			String title = book.getTitle();
+			String author = book.getAuthor();
+			String publisher = book.getPublisher();
+			int year = book.getYear();			
 			
 			String query = "SELECT * FROM " + BOOKTABLE + " WHERE " 
 					+ TITLE + "= ? AND " + AUTHOR + "= ? AND " + PUBLISHER + "= ? AND " + YEAR + "= ?; ";

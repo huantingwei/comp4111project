@@ -21,6 +21,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.apache.http.nio.protocol.BasicAsyncRequestConsumer;
 import org.apache.http.nio.protocol.BasicAsyncResponseProducer;
 import org.apache.http.nio.protocol.HttpAsyncExchange;
@@ -35,6 +36,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import comp4111project.BookManagementServer;
 import comp4111project.QueryManager;
 import comp4111project.TokenManager;
+import comp4111project.Model.Book;
 
 public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<HttpRequest> {
 
@@ -48,11 +50,22 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 	@Override
 	public void handle(HttpRequest request, HttpAsyncExchange httpExchange, HttpContext context)
 			throws HttpException, IOException {
+		new Thread() {
+			@Override
+			public void run() {
 		
-		final HttpResponse response = httpExchange.getResponse();
-        handleInternal(request, response, context);
-        httpExchange.submitResponse(new BasicAsyncResponseProducer(response));	
+				final HttpResponse response = httpExchange.getResponse();
+		        try {
+					handleInternal(request, response, context);
+				} catch (HttpException | IOException e) {
+					System.out.println("exception in addlookupbook");
+//					e.printStackTrace();
+				}
+		        httpExchange.submitResponse(new BasicAsyncResponseProducer(response));
+			}
+		}.start();
 	}
+	
 	private void handleInternal(final HttpRequest request,
             final HttpResponse response,
             final HttpContext context) throws HttpException, IOException {
@@ -65,7 +78,9 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 				return;
 			}
 		} catch (InterruptedException | ExecutionException e) {
+			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 			e.printStackTrace();
+			return;
 		} 
 		
 		switch (request.getRequestLine().getMethod()) {
@@ -77,10 +92,10 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 						HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 						String bookContent = EntityUtils.toString(entity, Consts.UTF_8);
 						ObjectMapper mapper = new ObjectMapper();
-						ConcurrentHashMap<String, Object> newBook = mapper.readValue(bookContent, ConcurrentHashMap.class);
+						Book newBook = mapper.readValue(bookContent, Book.class);
 
 						try {
-							// get token
+							// get token (getTokenFromURI())
 							URI uri = new URI(request.getRequestLine().getUri());
 							ConcurrentHashMap<String, String> query_pairs = new ConcurrentHashMap<String, String>();
 							String query = uri.getQuery();
@@ -96,20 +111,25 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 							try {
 								response.setStatusCode(addFuture.get().getStatusLine().getStatusCode());
 								response.setEntity(addFuture.get().getEntity());
+								return;
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 								response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+								return;
 							} catch (ExecutionException e) {
 								e.printStackTrace();
 								response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+								return;
 							}
 						} catch (URISyntaxException | UnsupportedEncodingException e) {
 							e.printStackTrace();
 							response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+							return;
 						}
 					}
 				} catch(Exception e) {
-					e.printStackTrace();
+					System.out.println("missing or incorrect fields");
+					//e.printStackTrace();
 					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 				}
 
@@ -140,7 +160,7 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 
 						  response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
 						  response.setEntity(
-							  new StringEntity(responseObject.toString(),
+							  new NStringEntity(responseObject.toString(),
 								  ContentType.TEXT_PLAIN)
 						  );
 						}
@@ -178,7 +198,7 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 			response.addHeader("Location", "/books/" + newBookID);
 			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_CREATED);
             response.setEntity(
-                    new StringEntity("http://" + BookManagementServer.HOST + ":" + BookManagementServer.PORT
+                    new NStringEntity("http://" + BookManagementServer.HOST + ":" + BookManagementServer.PORT
                     		+ BookManagementServer.ROOT_DIRECTORY + "/books/" + newBookID + "?token=" + token,
                             ContentType.TEXT_PLAIN));
 		}
