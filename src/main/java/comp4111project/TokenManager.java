@@ -35,21 +35,37 @@ public class TokenManager {
         
     public synchronized boolean removeUserAndToken(String token) {
     	try{
-    		String user = getUserFromToken(token);
-    		tokenToUser.remove(token);
-    		userToToken.remove(user);
-    		return true;
+    		if(tokenToUser.containsKey(token)) {
+    			String user = tokenToUser.remove(token);
+    			userToToken.remove(user);
+    			//System.out.println("removed token successfully");
+    			return true;
+    		}
+    		else {
+    			System.out.println("no user exist with this token");
+    			return false;
+    		}
     	} catch (Exception e) {
+    		System.out.println("exception in removeUserAndToken()");
 			return false;
 		}    	
     }
     
     public synchronized boolean addUserAndToken(String user, String token) {
+    	
 		try {
-			tokenToUser.put(token, user);
-			userToToken.put(user, token);
-			return true;
+			if(!tokenToUser.containsKey(token) && !userToToken.containsKey(user)) {
+				tokenToUser.put(token, user);
+				userToToken.put(user, token);
+    			//System.out.println("add token successfully");
+				return true;
+			}
+			else {
+				System.out.println("token user already exist");
+				return false;
+			}
 		} catch (Exception e) {
+    		System.out.println("exception in addUserAndToken()");
 			return false;
 		}
 
@@ -62,6 +78,7 @@ public class TokenManager {
     	return newToken;
 	}
     
+	// TODO: deprecated, moved to NLogoutRequestHandler and NAddLookUpBookRequestHandler
     public String getTokenFromURI(String url) {
     	String token = null;
     	try {
@@ -81,11 +98,11 @@ public class TokenManager {
     }
     
     public Boolean validateToken(String token) {
-		return tokenToUser.get(token) != null;
+		return tokenToUser.containsKey(token); 
     }
 
     public Boolean validateUser(String username) {
-    	return userToToken.get(username) != null;
+    	return userToToken.containsKey(username);
     }
 
     public String getUserFromToken(String token) {
