@@ -41,12 +41,20 @@ import org.apache.http.protocol.ResponseConnControl;
 import org.apache.http.protocol.ResponseContent;
 import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
+import org.apache.http.protocol.UriHttpRequestHandlerMapper;
 import org.apache.http.ssl.SSLContexts;
 
+import comp4111project.Handlers.AddLookUpBookRequestHandler;
+import comp4111project.Handlers.LoanReturnDeleteBookRequestHandler;
+import comp4111project.Handlers.LoginRequestHandler;
+import comp4111project.Handlers.LogoutRequestHandler;
 import comp4111project.Handlers.NAddLookUpBookRequestHandler;
+import comp4111project.Handlers.NLoanReturnDeleteBookRequestHandler;
 import comp4111project.Handlers.NLoginRequestHandler;
 import comp4111project.Handlers.NLogoutRequestHandler;
 import comp4111project.Handlers.NTestRequestHandler;
+import comp4111project.Handlers.NTransactionRequestHandler;
+import comp4111project.Handlers.TransactionRequestHandler;
 
 /**
  * Embedded HTTP/1.1 file server based on a non-blocking I/O model and capable of direct channel
@@ -58,7 +66,7 @@ public class NBookManagementServer {
     public static void main(final String[] args) throws Exception {
     	// path
         int port = 8081;
-        InetAddress host =InetAddress.getByName("localhost");
+        InetAddress host = InetAddress.getByName("localhost");
         String ROOT_DIRECTORY = "/BookManagementService";
 
         // initializing users
@@ -78,12 +86,22 @@ public class NBookManagementServer {
                     .build();
         }
         // handlers
-        UriHttpAsyncRequestHandlerMapper handlerMapper =
-                new UriHttpAsyncRequestHandlerMapper();
-        handlerMapper.register(ROOT_DIRECTORY + "/", new HttpFileHandler());
-        handlerMapper.register(ROOT_DIRECTORY + "/login", new NLoginRequestHandler());
-        handlerMapper.register(ROOT_DIRECTORY + "/logout", new NLogoutRequestHandler());
-        handlerMapper.register(ROOT_DIRECTORY + "/books", new NAddLookUpBookRequestHandler());
+        UriHttpAsyncRequestHandlerMapper handlerMapper = new UriHttpAsyncRequestHandlerMapper();
+		NLoginRequestHandler loginRequestHandler = new NLoginRequestHandler();
+		NLogoutRequestHandler logoutRequestHandler = new NLogoutRequestHandler();
+		NLoanReturnDeleteBookRequestHandler manageBookRequestHandler = new NLoanReturnDeleteBookRequestHandler();
+        NAddLookUpBookRequestHandler addLookUpBookRequestHandler = new NAddLookUpBookRequestHandler();
+		NTransactionRequestHandler transactionRequestHandler = new NTransactionRequestHandler();
+		
+        handlerMapper.register(ROOT_DIRECTORY + "/login", loginRequestHandler);
+        handlerMapper.register(ROOT_DIRECTORY + "/logout", logoutRequestHandler);
+        handlerMapper.register(ROOT_DIRECTORY + "/books", addLookUpBookRequestHandler);
+        handlerMapper.register(ROOT_DIRECTORY + "/books/*", manageBookRequestHandler);
+        handlerMapper.register(ROOT_DIRECTORY + "/transaction", transactionRequestHandler);
+        
+        // initialize connection pool
+        QueryManager qm = QueryManager.getInstance();
+        System.out.println("Finished initializing connection pool");
         
         final IOReactorConfig config = IOReactorConfig.custom()
                 .setSoTimeout(15000)

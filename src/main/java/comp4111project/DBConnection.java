@@ -49,6 +49,7 @@ public class DBConnection implements DBSource {
         Class.forName(props.getProperty("comp4111project.driver"));
         
         connections = new ArrayList<Connection>();
+        initConnection(MAX_CONN);
         
         DB_NAME = props.getProperty("comp4111.project.dbname");
         USER_TB_NAME = props.getProperty("comp4111project.usertbname");
@@ -63,24 +64,32 @@ public class DBConnection implements DBSource {
     /**
      * @return Connection, retrieved from the connection pool
      */
-    public synchronized Connection getConnection() throws SQLException {
-        if(connections.size() == 0) {
-            return DriverManager.getConnection(URL, USER, PASSWD);
-        }
-        else {
-            int lastIndex = connections.size() - 1;
-            return connections.remove(lastIndex);
-        }
+    public Connection getConnection() throws SQLException {
+    	synchronized(connections) {
+    		while(connections.isEmpty()) {
+	    		try {
+					this.connections.wait();
+				} catch (InterruptedException e) {
+					System.out.println("exception in connection.wait()");
+					//e.printStackTrace();
+				}
+	    	}
+	    	return connections.remove(0);
+    	}
     }
     /**
      * When closing the connection, add it to the connection pool for reuse
      */
-    public synchronized void closeConnection(Connection conn) throws SQLException {
-        if(connections.size() == MAX_CONN) {
-            conn.close();
-        }
-        else {
-            connections.add(conn);
+    public void closeConnection(Connection conn) throws SQLException {
+    	synchronized(connections) {
+    		connections.add(conn);
+    		connections.notify();
+    	}
+    }
+    
+    private void initConnection(int numConn) throws SQLException {
+        for(int i=0; i<numConn; i++) {
+            connections.add(DriverManager.getConnection(URL, USER, PASSWD));	
         }
     }
     
