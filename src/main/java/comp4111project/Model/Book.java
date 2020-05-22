@@ -8,11 +8,14 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Book {
 //    int idBook;
-    String title;
-    String author;
-    String publisher;
-    int year;
+    private String title;
+    private String author;
+    private String publisher;
+    private int year;
 
+    public Book() {
+    	super();
+    }
     public Book(String title, String author, String publisher, int year) {
 //        this.idBook = idBook;
         this.title = title;
