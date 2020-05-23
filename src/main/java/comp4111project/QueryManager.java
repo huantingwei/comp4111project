@@ -118,6 +118,7 @@ public class QueryManager {
             if(queryPairs.isEmpty()) {
                 searchQuery = "SELECT * FROM book";
             } else {
+            	// TODO: should use prepared statement to prevent SQL injection
                 searchQuery = "SELECT * FROM book WHERE";
                 for (ConcurrentHashMap.Entry<String, String> entry : queryPairs.entrySet()) {
                     String key = entry.getKey();
@@ -132,6 +133,7 @@ public class QueryManager {
                     }
                 }
                 searchQuery = searchQuery.substring(0, searchQuery.length() - 3); // Removed "AND" at the end
+                
                 if(queryPairs.containsKey("sortby")) {
                 	if(queryPairs.get("sortby").equals("id")) {
 						searchQuery += " " + "ORDER BY bookid";
@@ -147,8 +149,9 @@ public class QueryManager {
                     searchQuery += " LIMIT " + queryPairs.get("limit");
                 }
             }
-
-//            System.out.println(searchQuery);
+            // LOCK
+            searchQuery += "LOCK IN SHARE MODE"; 
+            System.out.println(searchQuery);
             PreparedStatement searchStmt = conn.prepareStatement(searchQuery);
             ResultSet rs = searchStmt.executeQuery();
 
@@ -198,8 +201,12 @@ public class QueryManager {
         try {
             Connection conn = connectionPool.getConnection();
             String searchQuery = "SELECT * FROM " 
-            					+ BOOKTABLE + " WHERE " + ID + " = " + " '" + bookID + "' ";
+            					+ BOOKTABLE + " WHERE " + ID + " = " 
+            					// + " '" + bookID + "' ";
+            					+ "? FOR UPDATE";
             PreparedStatement searchBookStmt = conn.prepareStatement(searchQuery);
+            searchBookStmt.setString(1, bookID);
+            
             ResultSet rs = searchBookStmt.executeQuery();
 
             if (rs.next()) {
@@ -207,12 +214,17 @@ public class QueryManager {
 //                    System.out.println("ready to be returned/loaned");
                     try {
                         if(isReturningBook) {
-                            updateQuery = "UPDATE " + BOOKTABLE + " SET " + AVAILABLE + " = '1' WHERE " + ID + " = " + " '" + bookID + "' ";
+                            updateQuery = "UPDATE " + BOOKTABLE + " SET " + AVAILABLE + " = '1' WHERE " + ID + " = " 
+                            				//+ " '" + bookID + "' ";
+                            				+ "?";
                         } else {
-                            updateQuery = "UPDATE " + BOOKTABLE + " SET " + AVAILABLE + " = '0' WHERE " + ID + " = " + " '" + bookID + "' ";
+                            updateQuery = "UPDATE " + BOOKTABLE + " SET " + AVAILABLE + " = '0' WHERE " + ID + " = " 
+            				//+ " '" + bookID + "' ";
+            				+ "?";
                         }
                         PreparedStatement updateAvailabilityStmt = conn.prepareStatement(updateQuery);
-
+                        updateAvailabilityStmt.setString(1, bookID);
+                        
                         int result = updateAvailabilityStmt.executeUpdate();
                         
                         rs.close();
@@ -349,7 +361,7 @@ public class QueryManager {
     	
 			String checkUserQuery = "SELECT 1 FROM " + USERTABLE  + " WHERE "
 					+  USERNAME + "=" + " ? " + "AND " + PASSWORD + "=" + " ? "
-					;//+ "LOCK IN SHARE MODE" ;
+					+ "LOCK IN SHARE MODE" ;
 			PreparedStatement stmt = conn.prepareStatement(checkUserQuery);
 			stmt.setString(1, usr);
 			stmt.setString(2, pwd);
@@ -393,7 +405,7 @@ public class QueryManager {
     }	
     
 	/**
-     * This method checks if the book exists in the database using book id
+     * This method checks if the book exists in the database using book id (for delete book)
      * @param long bookID
      * @return true: book exists; false: book does not exist or query fail
      */
@@ -402,7 +414,7 @@ public class QueryManager {
     	try {
     		Connection conn = connectionPool.getConnection();
     		String findBookQuery =
-				"SELECT * FROM " + BOOKTABLE  + " WHERE "+  ID + "=?" ;
+				"SELECT * FROM " + BOOKTABLE  + " WHERE "+  ID + "=? FOR UPDATE" ;
     		PreparedStatement findBookStmt = conn.prepareStatement(findBookQuery);
     		findBookStmt.setLong (1, bookID);
     		findBookStmt.execute();
@@ -424,8 +436,8 @@ public class QueryManager {
 	
     }
     /**
-     * This method checks if the book exists in the database using full book data
-     * @param ConcurrentHashMap<String, Object> book
+     * This method checks if the book exists in the database using full book data (for add another book)
+     * @param Book book
      * @return true: book exists
      * @return false: book does not exist or query fail
      */
@@ -445,7 +457,7 @@ public class QueryManager {
 			int year = book.getYear();			
 			
 			String query = "SELECT * FROM " + BOOKTABLE + " WHERE " 
-					+ TITLE + "= ? AND " + AUTHOR + "= ? AND " + PUBLISHER + "= ? AND " + YEAR + "= ?; ";
+					+ TITLE + "= ? AND " + AUTHOR + "= ? AND " + PUBLISHER + "= ? AND " + YEAR + "= ? LOCK IN SHARE MODE";
 			PreparedStatement searchStmt = conn.prepareStatement(query);
 			searchStmt.setString(1, title);
 			searchStmt.setString(2, author);
