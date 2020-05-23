@@ -492,7 +492,7 @@ public class QueryManager {
     	try {
     		Connection conn = connectionPool.getConnection();
     		String findBookQuery =
-				"SELECT * FROM " + BOOKTABLE  + " WHERE "+  ID + "=?" ;
+				"SELECT * FROM " + BOOKTABLE  + " WHERE "+  ID + "=? LOCK IN SHARE MODE" ;
     		PreparedStatement findBookStmt = conn.prepareStatement(findBookQuery);
     		findBookStmt.setLong (1, bookID);
     		findBookStmt.execute();

@@ -40,9 +40,18 @@ public class NLoanReturnDeleteBookRequestHandler implements HttpAsyncRequestHand
 	@Override
 	public void handle(HttpRequest request, HttpAsyncExchange httpExchange, HttpContext context)
 			throws HttpException, IOException {
-		final HttpResponse response = httpExchange.getResponse();
-        handleInternal(request, response, context);
-        httpExchange.submitResponse(new BasicAsyncResponseProducer(response));	
+		new Thread() {
+			@Override
+			public void run() {
+						final HttpResponse response = httpExchange.getResponse();
+						try {
+							handleInternal(request, response, context);
+						} catch (HttpException | IOException e) {
+							System.out.println("exception in loan return");
+						}
+						httpExchange.submitResponse(new BasicAsyncResponseProducer(response));
+			}
+		}.start();
 	}
 	
 	private void handleInternal(final HttpRequest request,

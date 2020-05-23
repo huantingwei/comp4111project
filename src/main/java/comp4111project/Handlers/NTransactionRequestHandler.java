@@ -48,15 +48,24 @@ public class NTransactionRequestHandler implements HttpAsyncRequestHandler<HttpR
 	@Override
 	public void handle(HttpRequest request, HttpAsyncExchange httpExchange, HttpContext context)
 			throws HttpException, IOException {
-		final HttpResponse response = httpExchange.getResponse();
-        handleInternal(request, response, context);
-        httpExchange.submitResponse(new BasicAsyncResponseProducer(response));	
+		new Thread() {
+			@Override
+			public void run() {
+						final HttpResponse response = httpExchange.getResponse();
+						try {
+							handleInternal(request, response, context);
+						} catch (HttpException | IOException e) {
+							System.out.println("exception in transaction");
+						}
+						httpExchange.submitResponse(new BasicAsyncResponseProducer(response));
+			}
+		}.start();	
 	}
 	
 	private void handleInternal(final HttpRequest request,
             final HttpResponse response,
             final HttpContext context) throws HttpException, IOException {
-		ConcurrentHashMap<String, Object> txData = null;
+		
 		
 		// validate token
 		Future<Boolean> validateTokenFuture = Executors.newSingleThreadExecutor().submit(() ->TokenManager.getInstance().validateTokenFromURI(request.getRequestLine().getUri()));
@@ -71,6 +80,8 @@ public class NTransactionRequestHandler implements HttpAsyncRequestHandler<HttpR
 		
 		// parse transaction request body
 		// verify if empty
+		ConcurrentHashMap<String, Object> txData = null;
+		
 		if (request instanceof HttpEntityEnclosingRequest) {
 			HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 			String content = EntityUtils.toString(entity, Consts.UTF_8);
