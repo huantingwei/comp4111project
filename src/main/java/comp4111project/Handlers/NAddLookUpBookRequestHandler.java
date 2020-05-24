@@ -105,6 +105,7 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 								int idx = pair.indexOf("=");
 								query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
 							}
+
 							String token = query_pairs.get("token");
 
 							Future<HttpResponse> addFuture = Executors.newSingleThreadExecutor().submit(() -> addBook(response, QueryManager.getInstance().addBook(newBook), token));
@@ -146,6 +147,12 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 		                int idx = pair.indexOf("=");
 		                query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
 		            }
+					if(query_pairs.containsKey("limit")) {
+						if(Integer.parseInt(query_pairs.get("limit")) < 0) {
+							response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
+							break;
+						}
+					}
 					try {
 					  Future<Vector> future = Executors.newSingleThreadExecutor().submit(() -> QueryManager.getInstance().getBooks(query_pairs));
 					  try {

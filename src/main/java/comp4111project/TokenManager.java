@@ -71,7 +71,7 @@ public class TokenManager {
 
     }
     
-	public String generateNewToken(String username) {
+	public synchronized String generateNewToken(String username) {
 		Base64.Encoder base64Encoder = Base64.getUrlEncoder();
 		String newToken = base64Encoder.encodeToString(username.getBytes());
 
@@ -97,11 +97,11 @@ public class TokenManager {
     	return token;
     }
     
-    public Boolean validateToken(String token) {
+    public synchronized Boolean validateToken(String token) {
 		return tokenToUser.containsKey(token); 
     }
 
-    public Boolean validateUser(String username) {
+    public synchronized Boolean validateUser(String username) {
     	return userToToken.containsKey(username);
     }
 

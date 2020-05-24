@@ -54,7 +54,7 @@ public class QueryManager {
      * @param usrTbCol
      * @param numOfUser
      */
-    public void initUser(String usrTbName, List<String> usrTbCol, int numOfUser) {
+    public synchronized void initUser(String usrTbName, List<String> usrTbCol, int numOfUser) {
     	
     	System.out.println("Start initializing " + Integer.toString(numOfUser) + " users.");     
 
@@ -109,8 +109,9 @@ public class QueryManager {
 	 * @param queryPairs
 	 * @return Vector
 	 */
-	public Vector<Book> getBooks(ConcurrentHashMap<String, String> queryPairs) {
-        queryPairs.remove("token");
+	public synchronized Vector<Book> getBooks(ConcurrentHashMap<String, String> queryPairs) {
+
+		queryPairs.remove("token");
         Vector<Book> books = new Vector<>();
         String searchQuery;
         try {
@@ -118,41 +119,133 @@ public class QueryManager {
             if(queryPairs.isEmpty()) {
                 searchQuery = "SELECT * FROM book";
             } else {
-            	// TODO: should use prepared statement to prevent SQL injection
-                searchQuery = "SELECT * FROM book WHERE";
-                for (ConcurrentHashMap.Entry<String, String> entry : queryPairs.entrySet()) {
-                    String key = entry.getKey();
-                    String value = entry.getValue();
+//            	// TODO: should use prepared statement to prevent SQL injection
+//                searchQuery = "SELECT * FROM book WHERE";
+//                for (ConcurrentHashMap.Entry<String, String> entry : queryPairs.entrySet()) {
+//                    String key = entry.getKey();
+//                    String value = entry.getValue();
+//
+//                    if(key.equals("author")) {
+//                        searchQuery += " " + capitalize(key) + " LIKE" + " '%" + value + "%'" + " AND";
+//                    } else if(key.equals("id")) {
+//						searchQuery += " bookid LIKE" + " '%" + value + "%'" + " AND";
+//					} else if(key.equals("title") || key.equals("publisher") || key.equals("year")) {
+//                        searchQuery += " " + capitalize(key) + " =" + " '" + value +"'" + " AND";
+//                    }
+//                }
+//				if(!searchQuery.equals("SELECT * FROM book WHERE")) {
+//					searchQuery = searchQuery.substring(0, searchQuery.length() - 3); // Removed "AND" at the end
+//				} else {
+//					searchQuery = searchQuery.substring(0, searchQuery.length() - 5); // Removed "WHERE" at the end
+//				}
+//
+//                if(queryPairs.containsKey("sortby")) {
+//                	if(queryPairs.get("sortby").equals("id")) {
+//						searchQuery += " " + "ORDER BY bookid";
+//					} else {
+//						searchQuery += " " + "ORDER BY " + queryPairs.get("sortby");
+//					}
+//
+//                }
+//                if(queryPairs.containsKey("order")) {
+//                    searchQuery += " " + queryPairs.get("order");
+//                }
+//                if(queryPairs.containsKey("limit")) {
+//                    searchQuery += " LIMIT " + queryPairs.get("limit");
+//                }
+//            }
+            searchQuery = "SELECT * FROM book WHERE";
 
-                    if(key.equals("author")) {
-                        searchQuery += " " + capitalize(key) + " LIKE" + " '%" + value + "%'" + " AND";
-                    } else if(key.equals("id")) {
-						searchQuery += " bookid LIKE" + " '%" + value + "%'" + " AND";
-					} else if(key.equals("title") || key.equals("publisher") || key.equals("year")) {
-                        searchQuery += " " + capitalize(key) + " =" + " '" + value +"'" + " AND";
-                    }
-                }
-                searchQuery = searchQuery.substring(0, searchQuery.length() - 3); // Removed "AND" at the end
-                
-                if(queryPairs.containsKey("sortby")) {
-                	if(queryPairs.get("sortby").equals("id")) {
+			for (ConcurrentHashMap.Entry<String, String> entry : queryPairs.entrySet()) {
+				String key = entry.getKey();
+				String value = entry.getValue();
+
+				if(key.equals("author")) {
+					searchQuery += " " + capitalize(key) + " = ?";
+				}
+				if(key.equals("id")) {
+					searchQuery += " bookid LIKE" + " ? AND";
+				}
+				if(key.equals("title")) {
+					searchQuery += " " + capitalize(key) + " = ? AND";
+				}
+				if(key.equals("publisher")) {
+					searchQuery += " " + capitalize(key) + " = ? AND";
+				}
+				if(key.equals("year")) {
+					searchQuery += " " + capitalize(key) + " = ? AND";
+				}
+			}
+			if(!searchQuery.equals("SELECT * FROM book WHERE")) {
+				searchQuery = searchQuery.substring(0, searchQuery.length() - 3); // Removed "AND" at the end
+			} else {
+				searchQuery = searchQuery.substring(0, searchQuery.length() - 5); // Removed "WHERE" at the end
+			}
+
+			if(queryPairs.containsKey("sortby")) {
+				switch(queryPairs.get("sortby")) {
+					case("author"):
+						searchQuery += " " + "ORDER BY Author";
+						break;
+					case("id"):
 						searchQuery += " " + "ORDER BY bookid";
-					} else {
-						searchQuery += " " + "ORDER BY " + queryPairs.get("sortby");
-					}
-
-                }
-                if(queryPairs.containsKey("order")) {
-                    searchQuery += " " + queryPairs.get("order");
-                }
-                if(queryPairs.containsKey("limit")) {
-                    searchQuery += " LIMIT " + queryPairs.get("limit");
-                }
+						break;
+					case("title"):
+						searchQuery += " " + "ORDER BY Title";
+						break;
+					case("publisher"):
+						searchQuery += " " + "ORDER BY Publisher";
+						break;
+					case("year"):
+						searchQuery += " " + "ORDER BY Year";
+						break;
+					default:
+						break;
+				}
+			}
+			if(queryPairs.containsKey("order")) {
+				searchQuery += " " + (queryPairs.get("order"));
+			}
+			if(queryPairs.containsKey("limit")) {
+				searchQuery += " LIMIT ?";
+			}
+			searchQuery += " LOCK IN SHARE MODE";
             }
+			int parameterCounter = 1;
+			PreparedStatement searchStmt = conn.prepareStatement(searchQuery);
+
+			if(queryPairs.containsKey("author")) {
+				searchStmt.setString(parameterCounter++,queryPairs.get("author"));
+			}
+			if (queryPairs.containsKey("id")) {
+				searchStmt.setInt(parameterCounter++,Integer.parseInt(queryPairs.get("id")));
+			}
+			if (queryPairs.containsKey("title")) {
+				searchStmt.setString(parameterCounter++,queryPairs.get("title"));
+			}
+			if (queryPairs.containsKey("publisher")) {
+				searchStmt.setString(parameterCounter++,queryPairs.get("publisher"));
+			}
+			if (queryPairs.containsKey("year")) {
+				System.out.println(queryPairs.get("year"));
+				searchStmt.setInt(parameterCounter++,Integer.parseInt(queryPairs.get("year")));
+
+			}
+//			if (queryPairs.containsKey("sortby")) {
+////				System.out.println(capitalize(queryPairs.get("sortby")));
+////				searchStmt.setString(parameterCounter++,queryPairs.get("sortby"));
+////			}
+////			if (queryPairs.containsKey("order")) {
+////				System.out.println(queryPairs.get("order").toUpperCase());
+////				searchStmt.setString(parameterCounter++,queryPairs.get("order").toUpperCase());
+////			}
+			if (queryPairs.containsKey("limit")) {
+				searchStmt.setInt(parameterCounter,Integer.parseInt(queryPairs.get("limit")));
+			}
             // LOCK
-            searchQuery += "LOCK IN SHARE MODE"; 
-            System.out.println(searchQuery);
-            PreparedStatement searchStmt = conn.prepareStatement(searchQuery);
+            searchQuery += " LOCK IN SHARE MODE";
+            System.out.println(searchStmt);
+//            PreparedStatement searchStmt = conn.prepareStatement(searchQuery);
             ResultSet rs = searchStmt.executeQuery();
 
             while(rs.next()) {
@@ -196,7 +289,7 @@ public class QueryManager {
 	 * @param isReturningBook 
 	 * @return 0 - OK -1 - No book record -2 - Bad Request
 	 */
-    public int returnAndLoanBook(String bookID, Boolean isReturningBook) {
+    public synchronized int returnAndLoanBook(String bookID, Boolean isReturningBook) {
         String updateQuery;
         try {
             Connection conn = connectionPool.getConnection();
@@ -264,7 +357,7 @@ public class QueryManager {
      * @param book
      * @return newBookID if a new book can be added; -1 if book already exists; -2 if bad requests
      */
-    public long addBook(Book book) {
+    public synchronized long addBook(Book book) {
     	try {
     		long existID = bookExist(book);
 			if(existID != -1) {
@@ -330,7 +423,7 @@ public class QueryManager {
      * @param id
      * @return 1: success; -1: query fail
      */
-    public int deleteBook(String id) {
+    public synchronized int deleteBook(String id) {
     	
     	long bookID = Long.parseLong(id);
     	if(bookExist(bookID) != -1) {
@@ -354,7 +447,7 @@ public class QueryManager {
     		return -1;
     }
     
-    private boolean validateUser(String usr, String pwd) {
+    private synchronized boolean validateUser(String usr, String pwd) {
     	Connection conn;
 		try {
 			conn = connectionPool.getConnection();
@@ -384,7 +477,7 @@ public class QueryManager {
      * @param user
      * @return 1: correct username and password, has not logged in yet; -1: user has logged in; -2: incorrect username/password or query fail
      */
-    public int loginUser(ConcurrentHashMap<String, Object> user) {
+    public synchronized int loginUser(ConcurrentHashMap<String, Object> user) {
     	String usr = (String) user.get("Username");
 		String pwd = (String) user.get("Password");
 		
@@ -409,7 +502,7 @@ public class QueryManager {
      * @param long bookID
      * @return true: book exists; false: book does not exist or query fail
      */
-    private long bookExist(long bookID) {
+    private synchronized long bookExist(long bookID) {
     	long exist = -1;
     	try {
     		Connection conn = connectionPool.getConnection();
@@ -441,7 +534,7 @@ public class QueryManager {
      * @return true: book exists
      * @return false: book does not exist or query fail
      */
-    private long bookExist(Book book) {
+    private synchronized long bookExist(Book book) {
     	long exist = -1;
     	try {
 			Connection conn = connectionPool.getConnection();
@@ -487,7 +580,7 @@ public class QueryManager {
      * @param bookID
      * @return 1 if book exist and available; 0 if book exist but unavailable; -1 if book doesn't exist; -2 if query fail
      */
-    public int bookAvailability(long bookID) {
+    public synchronized int bookAvailability(long bookID) {
     	int status;
     	try {
     		Connection conn = connectionPool.getConnection();
