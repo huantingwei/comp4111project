@@ -14,8 +14,9 @@ This is a RESTful web service in Java language for library book management.
 
 * ``` git clone https://github.com/huantingwei/comp4111project.git```
 * run the SQL file **dbConfig.sql** to establish the database instance and tables
-* run **BookManagementServer** class to start the server
-  * **The server will first initialize 100 users until it print "Finished initializing 100 users". Please wait until it finishes.**
+* ```gradle run``` 
+* or use IDE to run the **NBookManagementServer** class to start the server
+  * **The server will first initialize 10000 users and 100 connections. Please wait until it prints "Serving on localhost/127.0.0.1:8081".**
   * **The server is run on ```http://localhost:8081/BookManagementService```**
 
 

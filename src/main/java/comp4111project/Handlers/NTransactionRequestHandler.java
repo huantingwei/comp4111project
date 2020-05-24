@@ -55,7 +55,7 @@ public class NTransactionRequestHandler implements HttpAsyncRequestHandler<HttpR
 						try {
 							handleInternal(request, response, context);
 						} catch (HttpException | IOException e) {
-							System.out.println("exception in transaction");
+							//System.out.println("exception in transaction");
 						}
 						httpExchange.submitResponse(new BasicAsyncResponseProducer(response));
 			}

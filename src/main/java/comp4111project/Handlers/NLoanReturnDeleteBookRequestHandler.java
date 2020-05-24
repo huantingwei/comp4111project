@@ -47,7 +47,7 @@ public class NLoanReturnDeleteBookRequestHandler implements HttpAsyncRequestHand
 						try {
 							handleInternal(request, response, context);
 						} catch (HttpException | IOException e) {
-							System.out.println("exception in loan return");
+							//System.out.println("exception in loan return");
 						}
 						httpExchange.submitResponse(new BasicAsyncResponseProducer(response));
 			}

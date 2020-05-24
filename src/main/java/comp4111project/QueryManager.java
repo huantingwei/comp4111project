@@ -98,8 +98,8 @@ public class QueryManager {
     		connectionPool.closeConnection(conn);
     		System.out.println("Finished initializing " + Integer.toString(numOfUser) + " users.");
     	} catch (Exception e){
-    	      System.err.println("Got an exception!");
-    	      System.err.println(e.getMessage());
+    	      //System.err.println("Got an exception!");
+    	      //System.err.println(e.getMessage());
     	}
     	
     }
@@ -227,7 +227,7 @@ public class QueryManager {
 				searchStmt.setString(parameterCounter++,queryPairs.get("publisher"));
 			}
 			if (queryPairs.containsKey("year")) {
-				System.out.println(queryPairs.get("year"));
+				//System.out.println(queryPairs.get("year"));
 				searchStmt.setInt(parameterCounter++,Integer.parseInt(queryPairs.get("year")));
 
 			}
@@ -244,7 +244,7 @@ public class QueryManager {
 			}
             // LOCK
             searchQuery += " LOCK IN SHARE MODE";
-            System.out.println(searchStmt);
+            //System.out.println(searchStmt);
 //            PreparedStatement searchStmt = conn.prepareStatement(searchQuery);
             ResultSet rs = searchStmt.executeQuery();
 
@@ -263,8 +263,8 @@ public class QueryManager {
             connectionPool.closeConnection(conn);
             return books;
         } catch (Exception e) {
-            System.err.println("Got an exception in getBooks!");
-            System.err.println(e.getMessage());
+            //System.err.println("Got an exception in getBooks!");
+            //System.err.println(e.getMessage());
         }
 
         return books;
@@ -467,7 +467,7 @@ public class QueryManager {
 			return correctUser;
 			
 		} catch (SQLException e) {
-			System.out.println("sql exception in validateUser()");
+			//System.out.println("sql exception in validateUser()");
 			//e.printStackTrace();
 			return false;
 		}

@@ -54,7 +54,7 @@ public class NLoginRequestHandler implements HttpAsyncRequestHandler<HttpRequest
 						try {
 							handleInternal(request, response, context);
 						} catch (HttpException | IOException e) {
-							System.out.println("exception in login handle()");
+							//System.out.println("exception in login handle()");
 						}
 						httpExchange.submitResponse(new BasicAsyncResponseProducer(response));
 			}
@@ -112,28 +112,28 @@ public class NLoginRequestHandler implements HttpAsyncRequestHandler<HttpRequest
 							response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
 						}
 						else {
-							System.out.println("unsuccessful addtoken");
+							//System.out.println("unsuccessful addtoken");
 							response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 						}
 						break;
 					// this user has already logged in
 					case -1:
-						System.out.println("conflict user");
+						//System.out.println("conflict user");
 						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_CONFLICT);
 						break;
 					// incorrect username or password; or query fail
 					case -2:
-						System.out.println("wrong user");
+						//System.out.println("wrong user");
 						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 						break;
 					default:
-						System.out.println("default");
+						//System.out.println("default");
 						response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 						break;
 				}
 				return;
 			} else {
-				System.out.println("not http entity");
+				//System.out.println("not http entity");
 				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 				return;
 			}	

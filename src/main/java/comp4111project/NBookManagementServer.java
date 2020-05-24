@@ -3,6 +3,7 @@ package comp4111project;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -83,10 +84,10 @@ public class NBookManagementServer {
         
         // initialize connection pool
         // initialize 10000 users
-        QueryManager.getInstance();
+        QueryManager qm = QueryManager.getInstance();
         System.out.println("Finished initializing connection pool");
-        //qm.initUser("user", Arrays.asList("userid", "Username", "Password"), 10000);
-        System.out.println("Finished initializing 10000 user");
+        qm.initUser("user", Arrays.asList("userid", "Username", "Password"), 10000);
+        //System.out.println("Finished initializing 10000 user");
         
         final IOReactorConfig config = IOReactorConfig.custom()
                 .setSoTimeout(15000)

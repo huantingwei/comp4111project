@@ -40,7 +40,7 @@ public class NLogoutRequestHandler implements HttpAsyncRequestHandler<HttpReques
 					try {
 						handleInternal(request, response, context);
 					} catch (HttpException | IOException e) {
-						System.out.println("exception in logout handle()");
+						//System.out.println("exception in logout handle()");
 						//e.printStackTrace();
 					}
 					httpExchange.submitResponse(new BasicAsyncResponseProducer(response));
@@ -69,17 +69,17 @@ public class NLogoutRequestHandler implements HttpAsyncRequestHandler<HttpReques
 					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK);
 				}
 				else {
-					System.out.println("not removed");
+					//System.out.println("not removed");
 					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 				}
 			}
 			else{
-				System.out.println("not logged in yet");
+				//System.out.println("not logged in yet");
 				response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 			}
 		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
-			System.out.println("exception in future loggedin");
+			//e.printStackTrace();
+			//System.out.println("exception in future loggedin");
 			response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 		}
 	}

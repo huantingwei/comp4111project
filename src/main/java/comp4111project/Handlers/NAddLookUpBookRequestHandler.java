@@ -58,7 +58,7 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 		        try {
 					handleInternal(request, response, context);
 				} catch (HttpException | IOException e) {
-					System.out.println("exception in addlookupbook");
+					//System.out.println("exception in addlookupbook");
 //					e.printStackTrace();
 				}
 		        httpExchange.submitResponse(new BasicAsyncResponseProducer(response));
@@ -129,7 +129,7 @@ public class NAddLookUpBookRequestHandler implements HttpAsyncRequestHandler<Htt
 						}
 					}
 				} catch(Exception e) {
-					System.out.println("missing or incorrect fields");
+					//System.out.println("missing or incorrect fields");
 					//e.printStackTrace();
 					response.setStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST);
 				}
